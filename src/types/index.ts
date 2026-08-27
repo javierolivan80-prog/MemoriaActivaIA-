@@ -10,6 +10,7 @@ export interface ElderlyProfile {
   user_id: string;
   name: string;
   phone_number: string;
+  age: number | null;
   family_info: Record<string, unknown>;
   interests: string[];
   hobbies: string[];
@@ -17,6 +18,7 @@ export interface ElderlyProfile {
   favorite_topics: string[];
   sensitive_topics: string[];
   active: boolean;
+  created_at: string;
 }
 
 export type PlanType = "basic" | "care" | "premium";
