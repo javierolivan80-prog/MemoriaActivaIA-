@@ -1,0 +1,84 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  created_at: string;
+}
+
+export interface ElderlyProfile {
+  id: string;
+  user_id: string;
+  name: string;
+  phone_number: string;
+  family_info: Record<string, unknown>;
+  interests: string[];
+  hobbies: string[];
+  routines: string[];
+  favorite_topics: string[];
+  sensitive_topics: string[];
+  active: boolean;
+}
+
+export type PlanType = "basic" | "care" | "premium";
+export type CallsPerDay = 1 | 2 | 3;
+export type MinutesPerCall = 5 | 10 | 15;
+export type SubscriptionStatus =
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "trialing"
+  | "incomplete";
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  elderly_id: string;
+  plan_type: PlanType;
+  calls_per_day: CallsPerDay;
+  minutes_per_call: MinutesPerCall;
+  status: SubscriptionStatus;
+  stripe_subscription_id: string;
+}
+
+export type ConversationSessionStatus =
+  | "scheduled"
+  | "in_progress"
+  | "completed"
+  | "failed"
+  | "no_answer";
+
+export interface ConversationSession {
+  id: string;
+  elderly_id: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  status: ConversationSessionStatus;
+  mood: string | null;
+  retell_call_id: string | null;
+  transcript: string | null;
+}
+
+export type MemoryType = "permanent" | "recent" | "episodic";
+
+export interface Memory {
+  id: string;
+  elderly_id: string;
+  content: string;
+  memory_type: MemoryType;
+  source: string;
+  confidence: number;
+  created_at: string;
+}
+
+export type AlertLevel = 1 | 2 | 3;
+
+export interface Alert {
+  id: string;
+  elderly_id: string;
+  user_id: string;
+  alert_level: AlertLevel;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
