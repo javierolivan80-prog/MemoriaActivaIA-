@@ -7,23 +7,34 @@ import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Turnstile from "@/components/auth/Turnstile";
+
+const CAPTCHA_ENABLED = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (CAPTCHA_ENABLED && !captchaToken) {
+      setError("Completa la verificación para continuar.");
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: { captchaToken: captchaToken ?? undefined },
     });
 
     setLoading(false);
@@ -79,13 +90,19 @@ export default function LoginForm() {
           placeholder="••••••••"
         />
 
+        <Turnstile onVerify={setCaptchaToken} />
+
         {error && (
           <div className="rounded-xl bg-alert-urgent-bg p-4 text-sm text-alert-urgent">
             {error}
           </div>
         )}
 
-        <Button type="submit" disabled={loading} className="mt-4 w-full">
+        <Button
+          type="submit"
+          disabled={loading || (CAPTCHA_ENABLED && !captchaToken)}
+          className="mt-4 w-full"
+        >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />

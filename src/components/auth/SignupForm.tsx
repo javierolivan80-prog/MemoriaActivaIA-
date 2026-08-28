@@ -7,12 +7,16 @@ import { Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Turnstile from "@/components/auth/Turnstile";
+
+const CAPTCHA_ENABLED = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
 export default function SignupForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,13 +24,22 @@ export default function SignupForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (CAPTCHA_ENABLED && !captchaToken) {
+      setError("Completa la verificación para continuar.");
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: {
+        data: { name },
+        captchaToken: captchaToken ?? undefined,
+      },
     });
 
     setLoading(false);
@@ -125,13 +138,19 @@ export default function SignupForm() {
           hint="Mínimo 8 caracteres"
         />
 
+        <Turnstile onVerify={setCaptchaToken} />
+
         {error && (
           <div className="rounded-xl bg-alert-urgent-bg p-4 text-sm text-alert-urgent">
             {error}
           </div>
         )}
 
-        <Button type="submit" disabled={loading} className="mt-4 w-full">
+        <Button
+          type="submit"
+          disabled={loading || (CAPTCHA_ENABLED && !captchaToken)}
+          className="mt-4 w-full"
+        >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
