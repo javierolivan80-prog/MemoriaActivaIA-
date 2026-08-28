@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import Tabs, { type TabItem } from "@/components/ui/Tabs";
 import Timeline from "./Timeline";
+import Memories from "./Memories";
 import type { ElderlyProfile } from "@/types";
 import type { ElderlyRole } from "@/lib/access/elderlyAccess";
 
@@ -18,7 +19,10 @@ function initials(name: string): string {
     .join("");
 }
 
-const TABS: TabItem[] = [{ id: "historial", label: "Historial" }];
+const TABS: TabItem[] = [
+  { id: "historial", label: "Historial" },
+  { id: "recuerdos", label: "Recuerdos" },
+];
 
 export default function ElderlyDetailClient({
   profile,
@@ -82,6 +86,7 @@ export default function ElderlyDetailClient({
 
         <div className="mt-8">
           {activeTab === "historial" && <Timeline elderlyId={profile.id} />}
+          {activeTab === "recuerdos" && <Memories elderlyId={profile.id} />}
         </div>
       </div>
     </div>

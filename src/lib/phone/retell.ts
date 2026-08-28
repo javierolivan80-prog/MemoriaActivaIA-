@@ -1,5 +1,5 @@
 import Retell from "retell-sdk";
-import type { ElderlyProfile, Memory } from "@/types";
+import type { ElderlyPhoto, ElderlyProfile, Memory } from "@/types";
 
 let retellClient: Retell | null = null;
 
@@ -35,7 +35,8 @@ function familyInfoToText(familyInfo: Record<string, unknown>): string {
 
 export function buildAgentPrompt(
   profile: ElderlyProfile,
-  recentMemories: Memory[]
+  recentMemories: Memory[],
+  recentPhotos: ElderlyPhoto[] = []
 ): string {
   const preferredName = getPreferredName(profile);
   const lines: string[] = [];
@@ -87,6 +88,19 @@ export function buildAgentPrompt(
     }
   }
 
+  if (recentPhotos.length > 0) {
+    lines.push("");
+    lines.push(
+      "FOTOS RECIENTES QUE LA FAMILIA HA COMPARTIDO (puedes mencionarlas si sale el tema de forma natural, sin forzarlo):"
+    );
+    for (const photo of recentPhotos.slice(0, 5)) {
+      const people = photo.people_in_photo
+        ? ` (con ${photo.people_in_photo})`
+        : "";
+      lines.push(`- ${photo.caption}${people}`);
+    }
+  }
+
   lines.push("");
   lines.push("CÓMO DEBES HABLAR:");
   lines.push(
@@ -123,10 +137,11 @@ const DEFAULT_RETELL_VOICE_ID = "cartesia-Isabel";
 export async function createRetellAgent(
   profile: ElderlyProfile,
   recentMemories: Memory[] = [],
-  existing?: ExistingRetellIds
+  existing?: ExistingRetellIds,
+  recentPhotos: ElderlyPhoto[] = []
 ): Promise<{ agentId: string; llmId: string }> {
   const client = getRetellClient();
-  const generalPrompt = buildAgentPrompt(profile, recentMemories);
+  const generalPrompt = buildAgentPrompt(profile, recentMemories, recentPhotos);
   const beginMessage = `Hola ${getPreferredName(profile)}, ¿qué tal estás?`;
   const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/calls/webhook`;
 

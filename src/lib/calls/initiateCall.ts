@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createRetellAgent, makeCall } from "@/lib/phone/retell";
-import type { ElderlyProfile, Memory } from "@/types";
+import type { ElderlyPhoto, ElderlyProfile, Memory } from "@/types";
 
 export type InitiateCallResult =
   | { ok: true; callId: string; sessionId: string }
@@ -28,11 +28,20 @@ export async function initiateCallForElderly(
     .limit(5)
     .returns<Memory[]>();
 
+  const { data: photos } = await supabase
+    .from("memories_media")
+    .select("*")
+    .eq("elderly_id", elderlyId)
+    .order("created_at", { ascending: false })
+    .limit(5)
+    .returns<ElderlyPhoto[]>();
+
   try {
     const { agentId, llmId } = await createRetellAgent(
       profile,
       memories ?? [],
-      { agentId: profile.retell_agent_id, llmId: profile.retell_llm_id }
+      { agentId: profile.retell_agent_id, llmId: profile.retell_llm_id },
+      photos ?? []
     );
 
     if (
