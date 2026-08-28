@@ -31,7 +31,8 @@ export type SubscriptionStatus =
   | "past_due"
   | "canceled"
   | "trialing"
-  | "incomplete";
+  | "incomplete"
+  | "payment_failed";
 
 export interface Subscription {
   id: string;
@@ -41,7 +42,10 @@ export interface Subscription {
   calls_per_day: CallsPerDay;
   minutes_per_call: MinutesPerCall;
   status: SubscriptionStatus;
+  stripe_customer_id: string;
   stripe_subscription_id: string;
+  current_period_end: string | null;
+  created_at: string;
 }
 
 export type ConversationSessionStatus =

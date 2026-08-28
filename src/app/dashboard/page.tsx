@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
 import AlertsPanel, { type AlertItem } from "@/components/dashboard/AlertsPanel";
-import type { ElderlyProfile } from "@/types";
+import ManageSubscriptionButton from "@/components/dashboard/ManageSubscriptionButton";
+import { PLANS } from "@/lib/stripe/plans";
+import type { ElderlyProfile, Subscription } from "@/types";
 
 interface AlertRow {
   id: string;
@@ -47,6 +49,31 @@ export default async function DashboardPage() {
     created_at: row.created_at,
     elderly_name: row.elderly_profiles?.name ?? "Familiar",
   }));
+
+  const { data: subscriptionRows } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .returns<Subscription[]>();
+
+  const latestSubscriptionByElderly = new Map<string, Subscription>();
+  for (const subscription of subscriptionRows ?? []) {
+    if (!latestSubscriptionByElderly.has(subscription.elderly_id)) {
+      latestSubscriptionByElderly.set(subscription.elderly_id, subscription);
+    }
+  }
+
+  const ACTIVE_STATUSES = new Set(["active", "trialing"]);
+
+  const STATUS_LABELS: Record<string, string> = {
+    active: "Activa",
+    trialing: "En periodo de prueba",
+    past_due: "Pago pendiente",
+    payment_failed: "Pago fallido",
+    canceled: "Cancelada",
+    incomplete: "Incompleta",
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-16">
@@ -92,32 +119,73 @@ export default async function DashboardPage() {
               </div>
 
               <ul className="mt-6 space-y-4">
-                {profiles!.map((profile) => (
-                  <li
-                    key={profile.id}
-                    className="flex items-center justify-between rounded-2xl bg-white p-6 shadow-sm"
-                  >
-                    <div>
-                      <p className="text-lg font-medium text-gray-900">
-                        {profile.name}
-                      </p>
-                      <p className="text-base text-gray-600">
-                        {profile.age
-                          ? `${profile.age} años`
-                          : "Edad sin especificar"}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-4 py-1 text-sm font-medium ${
-                        profile.active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                {profiles!.map((profile) => {
+                  const subscription = latestSubscriptionByElderly.get(
+                    profile.id
+                  );
+                  const isActivePlan = subscription
+                    ? ACTIVE_STATUSES.has(subscription.status)
+                    : false;
+
+                  return (
+                    <li
+                      key={profile.id}
+                      className="rounded-2xl bg-white p-6 shadow-sm"
                     >
-                      {profile.active ? "Activo" : "Inactivo"}
-                    </span>
-                  </li>
-                ))}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-lg font-medium text-gray-900">
+                            {profile.name}
+                          </p>
+                          <p className="text-base text-gray-600">
+                            {profile.age
+                              ? `${profile.age} años`
+                              : "Edad sin especificar"}
+                          </p>
+                        </div>
+                        <span
+                          className={`rounded-full px-4 py-1 text-sm font-medium ${
+                            profile.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {profile.active ? "Activo" : "Inactivo"}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+                        {subscription ? (
+                          <>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                Plan {PLANS[subscription.plan_type].name}
+                              </p>
+                              <p
+                                className={`text-sm ${
+                                  isActivePlan
+                                    ? "text-gray-500"
+                                    : "text-amber-700"
+                                }`}
+                              >
+                                {STATUS_LABELS[subscription.status] ??
+                                  subscription.status}
+                              </p>
+                            </div>
+                            <ManageSubscriptionButton />
+                          </>
+                        ) : (
+                          <Link
+                            href={`/pricing?elderlyId=${profile.id}`}
+                            className="text-base font-medium text-gray-900 underline underline-offset-4"
+                          >
+                            Elegir plan
+                          </Link>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
