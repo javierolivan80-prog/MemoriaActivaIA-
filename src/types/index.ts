@@ -21,6 +21,7 @@ export interface ElderlyProfile {
   created_at: string;
   retell_agent_id: string | null;
   retell_llm_id: string | null;
+  preferred_call_time: string | null;
 }
 
 export type PlanType = "esencial" | "completo";
