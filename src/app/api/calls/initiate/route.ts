@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { initiateCallForElderly } from "@/lib/calls/initiateCall";
+import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
+
+const InitiateCallSchema = z.object({
+  elderlyId: z.uuid(),
+});
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -12,13 +18,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const elderlyId = body?.elderlyId;
+  const rawBody = await request.json().catch(() => null);
+  const parsed = InitiateCallSchema.safeParse(rawBody);
 
-  if (typeof elderlyId !== "string" || !elderlyId) {
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "El campo elderlyId es obligatorio" },
       { status: 400 }
+    );
+  }
+
+  const { elderlyId } = parsed.data;
+
+  const role = await getElderlyAccessRole(supabase, user.id, elderlyId);
+  if (role !== "owner") {
+    return NextResponse.json(
+      { error: "No tienes permiso para iniciar llamadas para este perfil" },
+      { status: 403 }
     );
   }
 
