@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Turnstile from "@/components/auth/Turnstile";
+import GoogleButton from "@/components/auth/GoogleButton";
 
 const CAPTCHA_ENABLED = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
@@ -64,6 +65,14 @@ export default function LoginForm() {
       <p className="mt-2 mb-6 text-text-secondary">
         Inicia sesión para ver cómo está tu familiar
       </p>
+
+      <GoogleButton />
+
+      <div className="my-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-sm text-text-muted">o</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input
