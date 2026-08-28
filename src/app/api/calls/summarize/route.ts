@@ -3,6 +3,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { sendAlertEmail } from "@/lib/email/resend";
 
 const CallAnalysisSchema = z.object({
   summary: z.string(),
@@ -122,6 +123,41 @@ export async function POST(request: Request) {
       message: analysis.alert_message ?? analysis.summary,
       is_read: false,
     });
+
+    if (analysis.alert_level >= 2) {
+      try {
+        const { data: accessRows } = await supabase
+          .from("elderly_profile_access")
+          .select("user_id")
+          .eq("elderly_id", session.elderly_id)
+          .eq("status", "accepted");
+
+        const recipients = await Promise.all(
+          (accessRows ?? [])
+            .filter((row) => row.user_id)
+            .map((row) => supabase.auth.admin.getUserById(row.user_id!))
+        );
+
+        const emails = recipients
+          .map((r) => r.data.user?.email)
+          .filter((email): email is string => Boolean(email));
+
+        await Promise.all(
+          emails.map((email) =>
+            sendAlertEmail({
+              to: email,
+              elderlyName: profile.name,
+              elderlyId: session.elderly_id,
+              alertMessage: analysis.alert_message ?? analysis.summary,
+              alertLevel: analysis.alert_level as 2 | 3,
+              dashboardUrl: process.env.NEXT_PUBLIC_APP_URL ?? "",
+            })
+          )
+        );
+      } catch (err) {
+        console.error("No se pudieron enviar los emails de alerta", err);
+      }
+    }
   }
 
   return NextResponse.json({ analysis });
