@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
+
+const stringList = z.array(z.string().trim().max(200)).max(50);
+
+const UpdateProfileSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  age: z.number().int().min(0).max(130).nullable(),
+  phone_number: z.string().trim().min(1).max(30),
+  active: z.boolean(),
+  family_info: z.record(z.string(), z.unknown()),
+  interests: stringList,
+  hobbies: stringList,
+  routines: stringList,
+  favorite_topics: stringList,
+  sensitive_topics: stringList,
+});
 
 export async function PATCH(
   request: Request,
@@ -24,22 +40,19 @@ export async function PATCH(
     );
   }
 
-  const body = await request.json();
+  const rawBody = await request.json().catch(() => null);
+  const parsed = UpdateProfileSchema.safeParse(rawBody);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Datos de perfil no válidos" },
+      { status: 400 }
+    );
+  }
 
   const { error } = await supabase
     .from("elderly_profiles")
-    .update({
-      name: body.name,
-      age: body.age,
-      phone_number: body.phone_number,
-      active: body.active,
-      family_info: body.family_info,
-      interests: body.interests,
-      hobbies: body.hobbies,
-      routines: body.routines,
-      favorite_topics: body.favorite_topics,
-      sensitive_topics: body.sensitive_topics,
-    })
+    .update(parsed.data)
     .eq("id", id);
 
   if (error) {

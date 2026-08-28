@@ -1,11 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
 import { getPreferredName } from "@/lib/phone/retell";
+import { checkRateLimit } from "@/lib/rateLimit";
 import type { ElderlyProfile } from "@/types";
 
 const client = new Anthropic();
+
+const ChatMessageSchema = z.object({
+  message: z.string().trim().min(1).max(1000),
+});
 
 function buildSystemPrompt(preferredName: string): string {
   return `Eres un asistente cálido y cercano que ayuda a la familia de ${preferredName} a estar al tanto de cómo está, basándote en las conversaciones telefónicas reales que ha tenido con nuestra IA de compañía.
@@ -136,12 +142,25 @@ export async function POST(
     );
   }
 
-  const body = await request.json().catch(() => null);
-  const message = typeof body?.message === "string" ? body.message.trim() : "";
-
-  if (!message) {
-    return NextResponse.json({ error: "Falta el mensaje" }, { status: 400 });
+  const allowed = await checkRateLimit(user.id, "family_chat", 30, 60);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Demasiados mensajes. Inténtalo de nuevo en un rato." },
+      { status: 429 }
+    );
   }
+
+  const rawBody = await request.json().catch(() => null);
+  const parsed = ChatMessageSchema.safeParse(rawBody);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "El mensaje no es válido (máximo 1000 caracteres)" },
+      { status: 400 }
+    );
+  }
+
+  const message = parsed.data.message;
 
   const { data: profile } = await supabase
     .from("elderly_profiles")

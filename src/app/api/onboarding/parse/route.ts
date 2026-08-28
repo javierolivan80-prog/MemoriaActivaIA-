@@ -3,6 +3,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const ExtractedProfileSchema = z.object({
   name: z.string(),
@@ -18,6 +19,10 @@ const ExtractedProfileSchema = z.object({
 
 const client = new Anthropic();
 
+const ParseTranscriptSchema = z.object({
+  transcript: z.string().trim().min(1).max(8000),
+});
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -28,15 +33,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const transcript = body?.transcript;
-
-  if (typeof transcript !== "string" || !transcript.trim()) {
+  const allowed = await checkRateLimit(user.id, "onboarding_parse", 20, 60);
+  if (!allowed) {
     return NextResponse.json(
-      { error: "El campo transcript es obligatorio" },
+      { error: "Demasiadas solicitudes. Inténtalo de nuevo en un rato." },
+      { status: 429 }
+    );
+  }
+
+  const rawBody = await request.json().catch(() => null);
+  const parsedBody = ParseTranscriptSchema.safeParse(rawBody);
+
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { error: "El campo transcript es obligatorio (máximo 8000 caracteres)" },
       { status: 400 }
     );
   }
+
+  const { transcript } = parsedBody.data;
 
   try {
     const response = await client.messages.parse({

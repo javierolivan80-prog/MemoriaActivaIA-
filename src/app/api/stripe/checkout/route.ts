@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/server";
 import { getPriceIdForPlan } from "@/lib/stripe/priceMap";
-import type { PlanType } from "@/types";
 
-const VALID_PLANS: PlanType[] = ["esencial", "completo"];
+const CheckoutSchema = z.object({
+  planType: z.enum(["esencial", "completo"]),
+  elderlyId: z.uuid(),
+});
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -16,19 +19,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const planType = body?.planType as PlanType | undefined;
-  const elderlyId = body?.elderlyId;
+  const rawBody = await request.json().catch(() => null);
+  const parsed = CheckoutSchema.safeParse(rawBody);
 
-  if (!planType || !VALID_PLANS.includes(planType)) {
-    return NextResponse.json({ error: "Plan no válido" }, { status: 400 });
-  }
-  if (typeof elderlyId !== "string" || !elderlyId) {
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "El campo elderlyId es obligatorio" },
+      { error: "Datos de la petición no válidos" },
       { status: 400 }
     );
   }
+
+  const { planType, elderlyId } = parsed.data;
 
   const { data: profile } = await supabase
     .from("elderly_profiles")
