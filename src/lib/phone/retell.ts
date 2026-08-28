@@ -10,6 +10,13 @@ function getRetellClient(): Retell {
   return retellClient;
 }
 
+function getPreferredName(profile: ElderlyProfile): string {
+  const nickname = profile.family_info.nickname;
+  return typeof nickname === "string" && nickname.trim()
+    ? nickname.trim()
+    : profile.name;
+}
+
 function familyInfoToText(familyInfo: Record<string, unknown>): string {
   if (
     typeof familyInfo.description === "string" &&
@@ -30,10 +37,11 @@ export function buildAgentPrompt(
   profile: ElderlyProfile,
   recentMemories: Memory[]
 ): string {
+  const preferredName = getPreferredName(profile);
   const lines: string[] = [];
 
   lines.push(
-    `Eres un acompañante telefónico cálido y cercano que llama regularmente a ${profile.name}` +
+    `Eres un acompañante telefónico cálido y cercano que llama regularmente a ${preferredName}` +
       (profile.age ? `, de ${profile.age} años,` : ",") +
       " para charlar y hacerle compañía en nombre de su familia."
   );
@@ -41,6 +49,11 @@ export function buildAgentPrompt(
   lines.push("");
   lines.push("SOBRE LA PERSONA:");
   lines.push(`- Nombre: ${profile.name}`);
+  if (preferredName !== profile.name) {
+    lines.push(
+      `- Cómo dirigirte a ella: llámala "${preferredName}", así es como le gusta que le llamen.`
+    );
+  }
   if (profile.age) lines.push(`- Edad: ${profile.age} años`);
   lines.push(`- Familia: ${familyInfoToText(profile.family_info)}`);
 
@@ -114,7 +127,7 @@ export async function createRetellAgent(
 ): Promise<{ agentId: string; llmId: string }> {
   const client = getRetellClient();
   const generalPrompt = buildAgentPrompt(profile, recentMemories);
-  const beginMessage = `Hola ${profile.name}, ¿qué tal estás?`;
+  const beginMessage = `Hola ${getPreferredName(profile)}, ¿qué tal estás?`;
   const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/calls/webhook`;
 
   const llm = existing?.llmId

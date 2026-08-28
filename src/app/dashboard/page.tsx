@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CheckCircle, PhoneCall, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
 import AlertsPanel, { type AlertItem } from "@/components/dashboard/AlertsPanel";
 import ManageSubscriptionButton from "@/components/dashboard/ManageSubscriptionButton";
+import Card from "@/components/ui/Card";
+import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import { PLANS } from "@/lib/stripe/plans";
 import type { ElderlyProfile, Subscription } from "@/types";
 
@@ -15,7 +18,23 @@ interface AlertRow {
   elderly_profiles: { name: string } | null;
 }
 
-export default async function DashboardPage() {
+const ACTIVE_STATUSES = new Set(["active", "trialing"]);
+
+const STATUS_LABELS: Record<string, string> = {
+  active: "Activa",
+  trialing: "En periodo de prueba",
+  past_due: "Pago pendiente",
+  payment_failed: "Pago fallido",
+  canceled: "Cancelada",
+  incomplete: "Incompleta",
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ created?: string }>;
+}) {
+  const { created } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,6 +43,9 @@ export default async function DashboardPage() {
   if (!user) {
     redirect("/auth/login");
   }
+
+  const displayName =
+    (user.user_metadata?.name as string | undefined) ?? user.email ?? "";
 
   const { data: profiles } = await supabase
     .from("elderly_profiles")
@@ -64,129 +86,141 @@ export default async function DashboardPage() {
     }
   }
 
-  const ACTIVE_STATUSES = new Set(["active", "trialing"]);
-
-  const STATUS_LABELS: Record<string, string> = {
-    active: "Activa",
-    trialing: "En periodo de prueba",
-    past_due: "Pago pendiente",
-    payment_failed: "Pago fallido",
-    canceled: "Cancelada",
-    incomplete: "Incompleta",
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-16">
-      <div className="mx-auto w-full max-w-3xl">
+    <div className="min-h-screen bg-background px-4 py-16">
+      <div className="mx-auto w-full max-w-4xl">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
-            MEMORIA ACTIVA
+          <h1 className="font-serif text-2xl text-text-primary">
+            Hola {displayName}
           </h1>
           <LogoutButton />
         </div>
+
+        {created === "success" && (
+          <div className="mt-8 flex items-center gap-3 rounded-2xl bg-secondary-light px-5 py-4">
+            <CheckCircle className="h-5 w-5 shrink-0 text-secondary" />
+            <p className="text-base text-text-primary">
+              Perfil creado. Empezaremos a llamar según el horario elegido.
+            </p>
+          </div>
+        )}
 
         <div className="mt-12">
           <AlertsPanel initialAlerts={alerts} />
         </div>
 
         <div className="mt-12">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-text-primary">
+              Tus familiares
+            </h2>
+            {hasProfiles && (
+              <Link
+                href="/profile/new"
+                className={`${buttonBaseClasses} ${buttonVariantClasses.primary} px-4 py-2 text-sm`}
+              >
+                + Añadir familiar
+              </Link>
+            )}
+          </div>
+
           {!hasProfiles && (
-            <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-              <p className="text-lg text-gray-600">
-                Todavía no has añadido a ningún familiar.
+            <Card className="mt-6 text-center">
+              <UserPlus
+                className="mx-auto h-12 w-12 text-primary"
+                strokeWidth={1.5}
+              />
+              <p className="mt-4 text-lg text-text-secondary">
+                Aún no has añadido a nadie
               </p>
               <Link
                 href="/profile/new"
-                className="mt-6 inline-block rounded-lg bg-gray-900 px-6 py-3 text-lg font-medium text-white transition hover:bg-gray-800"
+                className={`${buttonBaseClasses} ${buttonVariantClasses.primary} mt-6 px-8 py-4 text-lg`}
               >
-                Añadir familiar
+                Añadir mi primer familiar
               </Link>
-            </div>
+            </Card>
           )}
 
           {hasProfiles && (
-            <div>
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Tus familiares
-                </h2>
-                <Link
-                  href="/profile/new"
-                  className="text-base font-medium text-gray-900 underline underline-offset-4"
-                >
-                  + Añadir familiar
-                </Link>
-              </div>
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+              {profiles!.map((profile) => {
+                const subscription = latestSubscriptionByElderly.get(
+                  profile.id
+                );
+                const isActivePlan = subscription
+                  ? ACTIVE_STATUSES.has(subscription.status)
+                  : false;
 
-              <ul className="mt-6 space-y-4">
-                {profiles!.map((profile) => {
-                  const subscription = latestSubscriptionByElderly.get(
-                    profile.id
-                  );
-                  const isActivePlan = subscription
-                    ? ACTIVE_STATUSES.has(subscription.status)
-                    : false;
+                return (
+                  <Card key={profile.id}>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xl font-semibold text-text-primary">
+                          {profile.name}
+                        </p>
+                        <p className="text-base text-text-secondary">
+                          {profile.age
+                            ? `${profile.age} años`
+                            : "Edad sin especificar"}
+                        </p>
+                      </div>
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-medium ${
+                          profile.active
+                            ? "bg-secondary-light text-secondary"
+                            : "bg-surface-alt text-text-muted"
+                        }`}
+                      >
+                        {profile.active ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
 
-                  return (
-                    <li
-                      key={profile.id}
-                      className="rounded-2xl bg-white p-6 shadow-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-lg font-medium text-gray-900">
-                            {profile.name}
-                          </p>
-                          <p className="text-base text-gray-600">
-                            {profile.age
-                              ? `${profile.age} años`
-                              : "Edad sin especificar"}
-                          </p>
+                    <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
+                      {subscription ? (
+                        <div className="flex items-center gap-2">
+                          <PhoneCall
+                            className="h-4 w-4 text-primary"
+                            strokeWidth={1.75}
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">
+                              Plan {PLANS[subscription.plan_type].name}
+                            </p>
+                            <p
+                              className={`text-sm ${
+                                isActivePlan
+                                  ? "text-text-muted"
+                                  : "text-alert-warning"
+                              }`}
+                            >
+                              {STATUS_LABELS[subscription.status] ??
+                                subscription.status}
+                            </p>
+                          </div>
                         </div>
-                        <span
-                          className={`rounded-full px-4 py-1 text-sm font-medium ${
-                            profile.active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
+                      ) : (
+                        <Link
+                          href={`/pricing?elderlyId=${profile.id}`}
+                          className="text-base font-medium text-primary"
                         >
-                          {profile.active ? "Activo" : "Inactivo"}
-                        </span>
-                      </div>
+                          Elegir plan
+                        </Link>
+                      )}
 
-                      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
-                        {subscription ? (
-                          <>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                Plan {PLANS[subscription.plan_type].name}
-                              </p>
-                              <p
-                                className={`text-sm ${
-                                  isActivePlan
-                                    ? "text-gray-500"
-                                    : "text-amber-700"
-                                }`}
-                              >
-                                {STATUS_LABELS[subscription.status] ??
-                                  subscription.status}
-                              </p>
-                            </div>
-                            <ManageSubscriptionButton />
-                          </>
-                        ) : (
-                          <Link
-                            href={`/pricing?elderlyId=${profile.id}`}
-                            className="text-base font-medium text-gray-900 underline underline-offset-4"
-                          >
-                            Elegir plan
-                          </Link>
-                        )}
+                      <div className="flex items-center gap-2">
+                        {subscription && <ManageSubscriptionButton />}
+                        <Link
+                          href={`/elderly/${profile.id}`}
+                          className={`${buttonBaseClasses} ${buttonVariantClasses.ghost} px-3 py-2 text-sm`}
+                        >
+                          Ver detalles
+                        </Link>
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

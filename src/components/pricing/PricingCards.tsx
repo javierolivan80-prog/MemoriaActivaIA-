@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Loader2 } from "lucide-react";
+import { inputClasses } from "@/components/ui/Input";
+import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import { PLAN_ORDER, PLANS } from "@/lib/stripe/plans";
 import type { ElderlyProfile, PlanType } from "@/types";
 
@@ -46,7 +49,7 @@ export default function PricingCards({
         <div className="mx-auto mb-10 max-w-sm">
           <label
             htmlFor="elderly-select"
-            className="block text-base font-medium text-gray-900"
+            className="block text-sm font-medium text-text-primary"
           >
             ¿Para quién es el plan?
           </label>
@@ -54,7 +57,7 @@ export default function PricingCards({
             id="elderly-select"
             value={elderlyId}
             onChange={(event) => setElderlyId(event.target.value)}
-            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            className={inputClasses}
           >
             {profiles.map((profile) => (
               <option key={profile.id} value={profile.id}>
@@ -66,10 +69,10 @@ export default function PricingCards({
       )}
 
       {error && (
-        <p className="mb-6 text-center text-base text-red-600">{error}</p>
+        <p className="mb-6 text-center text-base text-alert-urgent">{error}</p>
       )}
 
-      <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
+      <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-2">
         {PLAN_ORDER.map((planType) => {
           const plan = PLANS[planType];
           const isPopular = planType === "completo";
@@ -77,41 +80,69 @@ export default function PricingCards({
           return (
             <div
               key={planType}
-              className={`flex flex-col rounded-2xl border bg-white p-8 shadow-sm ${
-                isPopular ? "border-gray-900 ring-1 ring-gray-900" : "border-gray-200"
+              className={`relative flex flex-col rounded-2xl bg-surface p-8 shadow-soft ${
+                isPopular ? "border-2 border-primary" : "border border-border"
               }`}
             >
               {isPopular && (
-                <span className="mb-4 inline-block w-fit rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-semibold text-white">
                   Más elegido
                 </span>
               )}
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-semibold text-text-primary">
                 {plan.name}
               </h2>
-              <p className="mt-4">
-                <span className="text-4xl font-semibold tracking-tight text-gray-900">
-                  {plan.priceEur.toFixed(2)}€
+              <p className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-semibold tracking-tight text-text-primary">
+                  {plan.priceEur.toFixed(2).replace(".", ",")}€
                 </span>
-                <span className="text-base text-gray-500"> /mes</span>
+                <span className="text-base text-text-muted">/mes</span>
               </p>
-              <p className="mt-3 text-base text-gray-600">{plan.description}</p>
+              <p className="mt-3 text-base text-text-secondary">
+                {plan.description}
+              </p>
+
+              <ul className="mt-6 space-y-3">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5">
+                    <Check
+                      className="mt-0.5 h-5 w-5 shrink-0 text-secondary"
+                      strokeWidth={2}
+                    />
+                    <span className="text-base text-text-secondary">
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+              </ul>
 
               <button
                 onClick={() => handleChoosePlan(planType)}
                 disabled={loadingPlan !== null}
-                className={`mt-8 rounded-lg px-4 py-3 text-lg font-medium transition disabled:opacity-50 ${
+                className={`${buttonBaseClasses} ${
                   isPopular
-                    ? "bg-gray-900 text-white hover:bg-gray-800"
-                    : "border border-gray-300 text-gray-900 hover:bg-gray-50"
-                }`}
+                    ? buttonVariantClasses.primary
+                    : buttonVariantClasses.secondary
+                } mt-8 w-full`}
               >
-                {loadingPlan === planType ? "Redirigiendo..." : "Elegir plan"}
+                {loadingPlan === planType ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Redirigiendo...
+                  </>
+                ) : (
+                  `Elegir ${plan.name}`
+                )}
               </button>
             </div>
           );
         })}
       </div>
+
+      <p className="mx-auto mt-10 max-w-md text-center text-sm text-text-muted">
+        Los precios incluyen IVA. Puedes cancelar la suscripción en cualquier
+        momento desde tu panel.
+      </p>
     </div>
   );
 }

@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -26,7 +29,7 @@ export default function LoginForm() {
     setLoading(false);
 
     if (error) {
-      setError("Email o contraseña incorrectos.");
+      setError("Correo o contraseña incorrectos.");
       return;
     }
 
@@ -35,64 +38,63 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-lg font-medium text-gray-900"
-        >
-          Email
-        </label>
-        <input
+    <div>
+      <h1 className="text-2xl font-semibold text-text-primary">
+        Bienvenido de nuevo
+      </h1>
+      <p className="mt-2 mb-6 text-text-secondary">
+        Inicia sesión para ver cómo está tu familiar
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Input
+          label="Correo electrónico"
           id="email"
+          name="email"
           type="email"
           autoComplete="email"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="tu@email.com"
         />
-      </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-lg font-medium text-gray-900"
-        >
-          Contraseña
-        </label>
-        <input
+        <Input
+          label="Contraseña"
           id="password"
+          name="password"
           type="password"
           autoComplete="current-password"
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="••••••••"
         />
-      </div>
 
-      {error && <p className="text-base text-red-600">{error}</p>}
+        {error && (
+          <div className="rounded-xl bg-alert-urgent-bg p-4 text-sm text-alert-urgent">
+            {error}
+          </div>
+        )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-lg bg-gray-900 px-4 py-3 text-lg font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
-      >
-        {loading ? "Entrando..." : "Iniciar sesión"}
-      </button>
+        <Button type="submit" disabled={loading} className="mt-4 w-full">
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Entrando...
+            </>
+          ) : (
+            "Iniciar sesión"
+          )}
+        </Button>
 
-      <p className="text-center text-base text-gray-600">
-        ¿No tienes cuenta?{" "}
-        <Link
-          href="/auth/signup"
-          className="font-medium text-gray-900 underline underline-offset-4"
-        >
-          Regístrate
-        </Link>
-      </p>
-    </form>
+        <p className="text-center text-sm text-text-secondary">
+          ¿No tienes cuenta?{" "}
+          <Link href="/auth/signup" className="font-medium text-primary">
+            Crear una
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import Button from "@/components/ui/Button";
 
 export default function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
@@ -19,12 +21,20 @@ export default function ManageSubscriptionButton() {
   }
 
   return (
-    <button
+    <Button
+      variant="secondary"
       onClick={handleClick}
       disabled={loading}
-      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+      className="px-4 py-2 text-sm"
     >
-      {loading ? "Abriendo..." : "Gestionar suscripción"}
-    </button>
+      {loading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Abriendo...
+        </>
+      ) : (
+        "Gestionar suscripción"
+      )}
+    </Button>
   );
 }

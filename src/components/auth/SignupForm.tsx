@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -11,13 +14,12 @@ export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setInfo(null);
     setLoading(true);
 
     const supabase = createClient();
@@ -41,89 +43,105 @@ export default function SignupForm() {
     }
 
     // Email confirmation is required before a session exists.
-    setInfo("Cuenta creada. Revisa tu email para confirmar la cuenta antes de iniciar sesión.");
+    setAwaitingConfirmation(true);
+  }
+
+  if (awaitingConfirmation) {
+    return (
+      <div className="text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary-light">
+          <Mail className="h-6 w-6 text-secondary" strokeWidth={1.75} />
+        </div>
+        <h1 className="mt-5 text-2xl font-semibold text-text-primary">
+          Revisa tu email
+        </h1>
+        <p className="mt-2 text-text-secondary">
+          Te hemos enviado un enlace de confirmación a{" "}
+          <span className="font-medium text-text-primary">{email}</span>.
+          Confírmalo para poder iniciar sesión.
+        </p>
+        <Link
+          href="/auth/login"
+          className="mt-6 inline-block font-medium text-primary"
+        >
+          Ir a iniciar sesión
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label
-          htmlFor="name"
-          className="block text-lg font-medium text-gray-900"
-        >
-          Nombre
-        </label>
-        <input
+    <div>
+      <h1 className="text-2xl font-semibold text-text-primary">
+        Crea tu cuenta
+      </h1>
+      <p className="mt-2 mb-6 text-text-secondary">
+        Empecemos a cuidar de quien más quieres
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Input
+          label="Nombre completo"
           id="name"
+          name="name"
           type="text"
           autoComplete="name"
           required
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="Tu nombre"
         />
-      </div>
 
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-lg font-medium text-gray-900"
-        >
-          Email
-        </label>
-        <input
+        <Input
+          label="Correo electrónico"
           id="email"
+          name="email"
           type="email"
           autoComplete="email"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="tu@email.com"
         />
-      </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-lg font-medium text-gray-900"
-        >
-          Contraseña
-        </label>
-        <input
+        <Input
+          label="Contraseña"
           id="password"
+          name="password"
           type="password"
           autoComplete="new-password"
           required
-          minLength={6}
+          minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="••••••••"
+          hint="Mínimo 8 caracteres"
         />
-      </div>
 
-      {error && <p className="text-base text-red-600">{error}</p>}
-      {info && <p className="text-base text-green-700">{info}</p>}
+        {error && (
+          <div className="rounded-xl bg-alert-urgent-bg p-4 text-sm text-alert-urgent">
+            {error}
+          </div>
+        )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-lg bg-gray-900 px-4 py-3 text-lg font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
-      >
-        {loading ? "Creando cuenta..." : "Crear cuenta"}
-      </button>
+        <Button type="submit" disabled={loading} className="mt-4 w-full">
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Creando cuenta...
+            </>
+          ) : (
+            "Crear cuenta"
+          )}
+        </Button>
 
-      <p className="text-center text-base text-gray-600">
-        ¿Ya tienes cuenta?{" "}
-        <Link
-          href="/auth/login"
-          className="font-medium text-gray-900 underline underline-offset-4"
-        >
-          Inicia sesión
-        </Link>
-      </p>
-    </form>
+        <p className="text-center text-sm text-text-secondary">
+          ¿Ya tienes cuenta?{" "}
+          <Link href="/auth/login" className="font-medium text-primary">
+            Iniciar sesión
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PricingCards from "@/components/pricing/PricingCards";
+import Card from "@/components/ui/Card";
+import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import type { ElderlyProfile } from "@/types";
 
 export default async function PricingPage({
@@ -27,27 +30,31 @@ export default async function PricingPage({
     .returns<ElderlyProfile[]>();
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-16">
-      <div className="mx-auto w-full max-w-3xl">
-        <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
-          Elige un plan
+    <div className="min-h-screen bg-background px-4 py-16">
+      <div className="mx-auto w-full max-w-5xl">
+        <h1 className="text-center font-serif text-4xl text-text-primary">
+          Elige cómo acompañarle
         </h1>
-        <p className="mt-2 text-center text-lg text-gray-600">
-          Todas las llamadas son reales, cálidas y pensadas para acompañar.
+        <p className="mt-3 text-center text-lg text-text-secondary">
+          Cambia o cancela cuando quieras, sin permanencia
         </p>
 
         {(!profiles || profiles.length === 0) && (
-          <div className="mx-auto mt-10 max-w-md rounded-2xl bg-white p-10 text-center shadow-sm">
-            <p className="text-lg text-gray-600">
+          <Card className="mx-auto mt-10 max-w-md text-center">
+            <UserPlus
+              className="mx-auto h-10 w-10 text-primary"
+              strokeWidth={1.5}
+            />
+            <p className="mt-4 text-lg text-text-secondary">
               Añade primero un familiar para poder elegir un plan.
             </p>
             <Link
               href="/profile/new"
-              className="mt-6 inline-block rounded-lg bg-gray-900 px-6 py-3 text-lg font-medium text-white transition hover:bg-gray-800"
+              className={`${buttonBaseClasses} ${buttonVariantClasses.primary} mt-6`}
             >
               Añadir familiar
             </Link>
-          </div>
+          </Card>
         )}
 
         {profiles && profiles.length > 0 && (
