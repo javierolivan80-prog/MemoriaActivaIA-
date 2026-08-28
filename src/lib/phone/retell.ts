@@ -10,7 +10,7 @@ function getRetellClient(): Retell {
   return retellClient;
 }
 
-function getPreferredName(profile: ElderlyProfile): string {
+export function getPreferredName(profile: ElderlyProfile): string {
   const nickname = profile.family_info.nickname;
   return typeof nickname === "string" && nickname.trim()
     ? nickname.trim()

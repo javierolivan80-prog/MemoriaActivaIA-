@@ -7,6 +7,7 @@ import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button"
 import Tabs, { type TabItem } from "@/components/ui/Tabs";
 import Timeline from "./Timeline";
 import Memories from "./Memories";
+import Chat from "./Chat";
 import type { ElderlyProfile } from "@/types";
 import type { ElderlyRole } from "@/lib/access/elderlyAccess";
 
@@ -22,6 +23,7 @@ function initials(name: string): string {
 const TABS: TabItem[] = [
   { id: "historial", label: "Historial" },
   { id: "recuerdos", label: "Recuerdos" },
+  { id: "chatear", label: "Chatear" },
 ];
 
 export default function ElderlyDetailClient({
@@ -89,6 +91,7 @@ export default function ElderlyDetailClient({
           {activeTab === "recuerdos" && (
             <Memories elderlyId={profile.id} canAdd={role === "owner"} />
           )}
+          {activeTab === "chatear" && <Chat elderlyId={profile.id} />}
         </div>
       </div>
     </div>
