@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import Tabs, { type TabItem } from "@/components/ui/Tabs";
+import CallCalendar from "@/components/ui/CallCalendar";
 import Timeline from "./Timeline";
 import Memories from "./Memories";
 import Chat from "./Chat";
@@ -22,6 +23,7 @@ function initials(name: string): string {
 
 const TABS: TabItem[] = [
   { id: "historial", label: "Historial" },
+  { id: "calendario", label: "Calendario" },
   { id: "recuerdos", label: "Recuerdos" },
   { id: "chatear", label: "Chatear" },
 ];
@@ -88,6 +90,9 @@ export default function ElderlyDetailClient({
 
         <div className="mt-8">
           {activeTab === "historial" && <Timeline elderlyId={profile.id} />}
+          {activeTab === "calendario" && (
+            <CallCalendar elderlyId={profile.id} elderlyName={profile.name} />
+          )}
           {activeTab === "recuerdos" && (
             <Memories elderlyId={profile.id} canAdd={role === "owner"} />
           )}
