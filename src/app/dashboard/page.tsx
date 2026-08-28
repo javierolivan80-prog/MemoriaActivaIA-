@@ -2,7 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
+import AlertsPanel, { type AlertItem } from "@/components/dashboard/AlertsPanel";
 import type { ElderlyProfile } from "@/types";
+
+interface AlertRow {
+  id: string;
+  message: string;
+  alert_level: 1 | 2 | 3;
+  created_at: string;
+  elderly_profiles: { name: string } | null;
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -23,6 +32,22 @@ export default async function DashboardPage() {
 
   const hasProfiles = (profiles?.length ?? 0) > 0;
 
+  const { data: alertRows } = await supabase
+    .from("alerts")
+    .select("id, message, alert_level, created_at, elderly_profiles(name)")
+    .eq("user_id", user.id)
+    .eq("is_read", false)
+    .order("created_at", { ascending: false })
+    .returns<AlertRow[]>();
+
+  const alerts: AlertItem[] = (alertRows ?? []).map((row) => ({
+    id: row.id,
+    message: row.message,
+    alert_level: row.alert_level,
+    created_at: row.created_at,
+    elderly_name: row.elderly_profiles?.name ?? "Familiar",
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-16">
       <div className="mx-auto w-full max-w-3xl">
@@ -31,6 +56,10 @@ export default async function DashboardPage() {
             MEMORIA ACTIVA
           </h1>
           <LogoutButton />
+        </div>
+
+        <div className="mt-12">
+          <AlertsPanel initialAlerts={alerts} />
         </div>
 
         <div className="mt-12">
