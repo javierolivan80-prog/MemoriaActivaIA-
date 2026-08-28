@@ -30,7 +30,9 @@ export async function GET(
 
   const { data: sessions, error } = await supabase
     .from("conversation_sessions")
-    .select("*, call_summaries(*)")
+    .select(
+      "id, started_at, duration_seconds, call_summaries(summary, mood_detected, topics_discussed)"
+    )
     .eq("elderly_id", id)
     .order("started_at", { ascending: false })
     .range(offset, offset + limit - 1);

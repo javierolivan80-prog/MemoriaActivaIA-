@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 import { Clock, Loader2, PhoneCall } from "lucide-react";
 import Button from "@/components/ui/Button";
-import type { CallSummary, ConversationSession } from "@/types";
-
-interface SessionWithSummary extends ConversationSession {
-  call_summaries: CallSummary[];
+interface SessionWithSummary {
+  id: string;
+  started_at: string;
+  duration_seconds: number | null;
+  call_summaries: {
+    summary: string;
+    mood_detected: string | null;
+    topics_discussed: string[];
+  }[];
 }
 
 const MOOD_STYLES: Record<string, { dot: string; label: string; emoji: string }> = {
