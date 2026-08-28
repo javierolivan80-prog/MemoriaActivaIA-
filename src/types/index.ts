@@ -101,3 +101,39 @@ export interface CallSummary {
   mood_detected: string | null;
   created_at: string;
 }
+
+export interface ElderlyPhoto {
+  id: string;
+  elderly_id: string;
+  uploaded_by: string;
+  image_url: string;
+  caption: string;
+  people_in_photo: string | null;
+  created_at: string;
+}
+
+export type ElderlyAccessRole = "owner" | "viewer";
+export type ElderlyAccessStatus = "pending" | "accepted";
+
+export interface ElderlyProfileAccess {
+  id: string;
+  elderly_id: string;
+  user_id: string | null;
+  invited_email: string | null;
+  role: ElderlyAccessRole;
+  invited_by: string;
+  invite_token: string;
+  status: ElderlyAccessStatus;
+  created_at: string;
+}
+
+export type ChatRole = "user" | "assistant";
+
+export interface FamilyChatMessage {
+  id: string;
+  elderly_id: string;
+  user_id: string | null;
+  role: ChatRole;
+  content: string;
+  created_at: string;
+}

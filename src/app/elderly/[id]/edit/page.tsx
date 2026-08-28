@@ -1,10 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
-import ElderlyDetailClient from "@/components/elderly/ElderlyDetailClient";
+import EditProfileForm from "@/components/elderly/EditProfileForm";
 import type { ElderlyProfile } from "@/types";
 
-export default async function ElderlyDetailPage({
+export default async function EditElderlyProfilePage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -20,7 +20,7 @@ export default async function ElderlyDetailPage({
   }
 
   const role = await getElderlyAccessRole(supabase, user.id, id);
-  if (!role) {
+  if (role !== "owner") {
     notFound();
   }
 
@@ -34,5 +34,16 @@ export default async function ElderlyDetailPage({
     notFound();
   }
 
-  return <ElderlyDetailClient profile={profile} role={role} />;
+  return (
+    <div className="min-h-screen bg-background px-4 py-10 sm:py-16">
+      <div className="mx-auto w-full max-w-lg">
+        <h1 className="text-2xl font-semibold text-text-primary">
+          Editar perfil de {profile.name}
+        </h1>
+        <div className="mt-8">
+          <EditProfileForm profile={profile} />
+        </div>
+      </div>
+    </div>
+  );
 }
