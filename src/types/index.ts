@@ -132,8 +132,16 @@ export type ChatRole = "user" | "assistant";
 export interface FamilyChatMessage {
   id: string;
   elderly_id: string;
+  thread_id: string;
   user_id: string | null;
   role: ChatRole;
   content: string;
   created_at: string;
+}
+
+export interface FamilyChatThread {
+  id: string;
+  title: string;
+  updated_at: string;
+  last_message_preview: string | null;
 }

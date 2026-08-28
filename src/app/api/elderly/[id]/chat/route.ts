@@ -10,8 +10,11 @@ import type { ElderlyProfile } from "@/types";
 const client = new Anthropic();
 
 const ChatMessageSchema = z.object({
+  threadId: z.uuid(),
   message: z.string().trim().min(1).max(1000),
 });
+
+const ThreadIdSchema = z.uuid();
 
 function buildSystemPrompt(preferredName: string): string {
   return `Eres un asistente cálido y cercano que ayuda a la familia de ${preferredName} a estar al tanto de cómo está, basándote en las conversaciones telefónicas reales que ha tenido con nuestra IA de compañía.
@@ -104,10 +107,21 @@ export async function GET(
     );
   }
 
+  const { searchParams } = new URL(request.url);
+  const parsedThreadId = ThreadIdSchema.safeParse(searchParams.get("threadId"));
+
+  if (!parsedThreadId.success) {
+    return NextResponse.json(
+      { error: "El parámetro threadId es obligatorio" },
+      { status: 400 }
+    );
+  }
+
   const { data: messages, error } = await supabase
     .from("family_chat_messages")
     .select("*")
     .eq("elderly_id", id)
+    .eq("thread_id", parsedThreadId.data)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -160,7 +174,18 @@ export async function POST(
     );
   }
 
-  const message = parsed.data.message;
+  const { threadId, message } = parsed.data;
+
+  const { data: thread } = await supabase
+    .from("family_chat_threads")
+    .select("id")
+    .eq("id", threadId)
+    .eq("elderly_id", id)
+    .single();
+
+  if (!thread) {
+    return NextResponse.json({ error: "Chat no encontrado" }, { status: 404 });
+  }
 
   const { data: profile } = await supabase
     .from("elderly_profiles")
@@ -189,14 +214,20 @@ export async function POST(
       supabase
         .from("family_chat_messages")
         .select("role, content")
-        .eq("elderly_id", id)
+        .eq("thread_id", threadId)
         .order("created_at", { ascending: false })
         .limit(10),
     ]);
 
   const { error: insertUserError } = await supabase
     .from("family_chat_messages")
-    .insert({ elderly_id: id, user_id: user.id, role: "user", content: message });
+    .insert({
+      elderly_id: id,
+      thread_id: threadId,
+      user_id: user.id,
+      role: "user",
+      content: message,
+    });
 
   if (insertUserError) {
     return NextResponse.json(
@@ -248,6 +279,7 @@ export async function POST(
     .from("family_chat_messages")
     .insert({
       elderly_id: id,
+      thread_id: threadId,
       user_id: null,
       role: "assistant",
       content: assistantReply,

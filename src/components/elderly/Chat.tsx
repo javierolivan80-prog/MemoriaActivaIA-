@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Send } from "lucide-react";
-import type { FamilyChatMessage } from "@/types";
+import { ChevronLeft, Loader2, Pencil, Send, Trash2 } from "lucide-react";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import type { FamilyChatMessage, FamilyChatThread } from "@/types";
 
 const SUGGESTIONS = [
   "¿Cómo está esta semana?",
@@ -21,12 +23,186 @@ function TypingIndicator() {
   );
 }
 
-export default function Chat({ elderlyId }: { elderlyId: string }) {
+function formatThreadDate(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const isSameDay = date.toDateString() === now.toDateString();
+  if (isSameDay) {
+    return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  }
+  return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+}
+
+function NewThreadModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (title: string) => Promise<void>;
+}) {
+  const [title, setTitle] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleCreate() {
+    if (!title.trim()) {
+      setError("Ponle un nombre al chat");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      await onCreate(title.trim());
+    } catch {
+      setError("No se pudo crear el chat");
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-soft">
+        <h2 className="text-lg font-semibold text-text-primary">Nuevo chat</h2>
+        <div className="mt-4">
+          <Input
+            label="¿Sobre qué queréis hablar?"
+            name="thread-title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Ej: Dudas de salud"
+            autoFocus
+          />
+        </div>
+        {error && (
+          <div className="mt-3 rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
+            {error}
+          </div>
+        )}
+        <div className="mt-5 flex gap-3">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCreate}
+            disabled={creating}
+            className="flex-1"
+          >
+            {creating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creando...
+              </>
+            ) : (
+              "Crear chat"
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ThreadList({
+  elderlyName,
+  threads,
+  loading,
+  activeThreadId,
+  onSelect,
+  onCreate,
+}: {
+  elderlyName: string;
+  threads: FamilyChatThread[];
+  loading: boolean;
+  activeThreadId: string | null;
+  onSelect: (id: string) => void;
+  onCreate: (title: string) => Promise<void>;
+}) {
+  const [showNewModal, setShowNewModal] = useState(false);
+
+  return (
+    <div className="flex h-full flex-col">
+      <Button type="button" onClick={() => setShowNewModal(true)} className="w-full">
+        + Nuevo chat
+      </Button>
+
+      <div className="mt-4 flex-1 space-y-1 overflow-y-auto">
+        {loading && (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
+          </div>
+        )}
+
+        {!loading && threads.length === 0 && (
+          <p className="mt-4 text-sm text-text-secondary">
+            Crea tu primer chat para empezar a preguntar sobre {elderlyName}
+          </p>
+        )}
+
+        {threads.map((thread) => (
+          <button
+            key={thread.id}
+            type="button"
+            onClick={() => onSelect(thread.id)}
+            className={`w-full rounded-xl px-3 py-2.5 text-left transition-colors duration-150 ${
+              thread.id === activeThreadId
+                ? "bg-primary-light"
+                : "hover:bg-surface-alt"
+            }`}
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="truncate text-sm font-medium text-text-primary">
+                {thread.title}
+              </span>
+              <span className="shrink-0 text-xs text-text-muted">
+                {formatThreadDate(thread.updated_at)}
+              </span>
+            </div>
+            {thread.last_message_preview && (
+              <p className="mt-0.5 truncate text-xs text-text-secondary">
+                {thread.last_message_preview}
+              </p>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {showNewModal && (
+        <NewThreadModal
+          onClose={() => setShowNewModal(false)}
+          onCreate={async (title) => {
+            await onCreate(title);
+            setShowNewModal(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ThreadConversation({
+  elderlyId,
+  thread,
+  onBack,
+  onRenamed,
+  onDeleted,
+  onMessageSent,
+}: {
+  elderlyId: string;
+  thread: FamilyChatThread;
+  onBack: () => void;
+  onRenamed: (title: string) => void;
+  onDeleted: () => void;
+  onMessageSent: (preview: string) => void;
+}) {
   const [messages, setMessages] = useState<FamilyChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(thread.title);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,7 +210,9 @@ export default function Chat({ elderlyId }: { elderlyId: string }) {
 
     async function load() {
       setLoading(true);
-      const response = await fetch(`/api/elderly/${elderlyId}/chat`);
+      const response = await fetch(
+        `/api/elderly/${elderlyId}/chat?threadId=${thread.id}`
+      );
       const data = await response.json();
       if (cancelled) return;
       setMessages(data.messages ?? []);
@@ -45,7 +223,7 @@ export default function Chat({ elderlyId }: { elderlyId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [elderlyId]);
+  }, [elderlyId, thread.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,6 +240,7 @@ export default function Chat({ elderlyId }: { elderlyId: string }) {
       {
         id: `temp-${Date.now()}`,
         elderly_id: elderlyId,
+        thread_id: thread.id,
         user_id: null,
         role: "user",
         content: trimmed,
@@ -73,7 +252,7 @@ export default function Chat({ elderlyId }: { elderlyId: string }) {
     const response = await fetch(`/api/elderly/${elderlyId}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: trimmed }),
+      body: JSON.stringify({ threadId: thread.id, message: trimmed }),
     });
     const data = await response.json();
 
@@ -85,59 +264,155 @@ export default function Chat({ elderlyId }: { elderlyId: string }) {
     }
 
     setMessages((current) => [...current, data.message]);
+    onMessageSent(data.message.content);
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-text-muted" />
-      </div>
+  async function handleRename() {
+    const title = titleDraft.trim();
+    if (!title || title === thread.title) {
+      setRenaming(false);
+      return;
+    }
+    const response = await fetch(
+      `/api/elderly/${elderlyId}/chat-threads/${thread.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      }
     );
+    if (response.ok) {
+      onRenamed(title);
+    }
+    setRenaming(false);
+  }
+
+  async function handleDelete() {
+    const response = await fetch(
+      `/api/elderly/${elderlyId}/chat-threads/${thread.id}`,
+      { method: "DELETE" }
+    );
+    if (response.ok) {
+      onDeleted();
+    }
   }
 
   return (
-    <div className="flex h-[60vh] flex-col">
-      <div className="flex-1 space-y-3 overflow-y-auto px-1 py-2">
-        {messages.length === 0 && (
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => handleSend(suggestion)}
-                className="rounded-full border border-primary bg-primary-light px-4 py-2 text-sm font-medium text-primary"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+    <div className="flex h-[65vh] flex-col">
+      <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Ver chats"
+            className="shrink-0 rounded-lg p-1 text-text-secondary hover:bg-surface-alt md:hidden"
           >
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-base leading-relaxed ${
-                message.role === "user"
-                  ? "bg-primary text-white"
-                  : "bg-surface-alt text-text-primary"
-              }`}
-            >
-              {message.content}
-            </div>
-          </div>
-        ))}
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          {renaming ? (
+            <input
+              value={titleDraft}
+              onChange={(event) => setTitleDraft(event.target.value)}
+              onKeyDown={(event) => event.key === "Enter" && handleRename()}
+              onBlur={handleRename}
+              autoFocus
+              className="w-full rounded-lg border border-primary px-2 py-1 text-base font-semibold text-text-primary focus:outline-none"
+            />
+          ) : (
+            <h2 className="truncate text-base font-semibold text-text-primary">
+              {thread.title}
+            </h2>
+          )}
+        </div>
 
-        {sending && (
-          <div className="flex justify-start">
-            <TypingIndicator />
+        {!renaming && (
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setRenaming(true)}
+              aria-label="Renombrar chat"
+              className="rounded-lg p-1.5 text-text-muted hover:bg-surface-alt hover:text-text-primary"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+            {confirmingDelete ? (
+              <div className="flex items-center gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(false)}
+                  className="text-text-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="font-medium text-alert-urgent"
+                >
+                  Sí, eliminar
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                aria-label="Eliminar chat"
+                className="rounded-lg p-1.5 text-text-muted hover:bg-surface-alt hover:text-alert-urgent"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
           </div>
         )}
-
-        <div ref={bottomRef} />
       </div>
+
+      {loading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-text-muted" />
+        </div>
+      ) : (
+        <div className="flex-1 space-y-3 overflow-y-auto px-1 py-3">
+          {messages.length === 0 && (
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTIONS.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => handleSend(suggestion)}
+                  className="rounded-full border border-primary bg-primary-light px-4 py-2 text-sm font-medium text-primary"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-3 text-base leading-relaxed ${
+                  message.role === "user"
+                    ? "bg-primary text-white"
+                    : "bg-surface-alt text-text-primary"
+                }`}
+              >
+                {message.content}
+              </div>
+            </div>
+          ))}
+
+          {sending && (
+            <div className="flex justify-start">
+              <TypingIndicator />
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+      )}
 
       {error && (
         <div className="mt-2 rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
@@ -164,6 +439,122 @@ export default function Chat({ elderlyId }: { elderlyId: string }) {
         >
           <Send className="h-5 w-5" />
         </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Chat({
+  elderlyId,
+  elderlyName,
+}: {
+  elderlyId: string;
+  elderlyName: string;
+}) {
+  const [threads, setThreads] = useState<FamilyChatThread[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [showListOnMobile, setShowListOnMobile] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      const response = await fetch(`/api/elderly/${elderlyId}/chat-threads`);
+      const data = await response.json();
+      if (cancelled) return;
+      setThreads(data.threads ?? []);
+      setLoading(false);
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [elderlyId]);
+
+  async function handleCreateThread(title: string) {
+    const response = await fetch(`/api/elderly/${elderlyId}/chat-threads`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+    if (!response.ok) throw new Error("failed");
+    const data = await response.json();
+    setThreads((current) => [data.thread, ...current]);
+    setActiveThreadId(data.thread.id);
+    setShowListOnMobile(false);
+  }
+
+  function handleSelectThread(id: string) {
+    setActiveThreadId(id);
+    setShowListOnMobile(false);
+  }
+
+  function handleRenamed(title: string) {
+    setThreads((current) =>
+      current.map((t) => (t.id === activeThreadId ? { ...t, title } : t))
+    );
+  }
+
+  function handleDeleted() {
+    setThreads((current) => current.filter((t) => t.id !== activeThreadId));
+    setActiveThreadId(null);
+    setShowListOnMobile(true);
+  }
+
+  function handleMessageSent(preview: string) {
+    setThreads((current) => {
+      const updated = current.map((t) =>
+        t.id === activeThreadId
+          ? { ...t, last_message_preview: preview, updated_at: new Date().toISOString() }
+          : t
+      );
+      return updated.sort(
+        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+    });
+  }
+
+  const activeThread = threads.find((t) => t.id === activeThreadId) ?? null;
+
+  return (
+    <div className="flex gap-6">
+      <div
+        className={`w-full shrink-0 md:block md:w-[280px] ${
+          showListOnMobile ? "block" : "hidden"
+        }`}
+      >
+        <ThreadList
+          elderlyName={elderlyName}
+          threads={threads}
+          loading={loading}
+          activeThreadId={activeThreadId}
+          onSelect={handleSelectThread}
+          onCreate={handleCreateThread}
+        />
+      </div>
+
+      <div className={`min-w-0 flex-1 ${showListOnMobile ? "hidden md:block" : "block"}`}>
+        {activeThread ? (
+          <ThreadConversation
+            key={activeThread.id}
+            elderlyId={elderlyId}
+            thread={activeThread}
+            onBack={() => setShowListOnMobile(true)}
+            onRenamed={handleRenamed}
+            onDeleted={handleDeleted}
+            onMessageSent={handleMessageSent}
+          />
+        ) : (
+          <div className="flex h-[65vh] flex-col items-center justify-center rounded-2xl border border-border bg-surface p-8 text-center">
+            <p className="text-text-secondary">
+              Selecciona un chat o crea uno nuevo para empezar a preguntar
+              sobre {elderlyName}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

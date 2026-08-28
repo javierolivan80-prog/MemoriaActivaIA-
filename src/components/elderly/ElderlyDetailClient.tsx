@@ -39,7 +39,9 @@ export default function ElderlyDetailClient({
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 sm:py-16">
-      <div className="mx-auto w-full max-w-3xl">
+      <div
+        className={`mx-auto w-full ${activeTab === "chatear" ? "max-w-4xl" : "max-w-3xl"}`}
+      >
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary"
@@ -96,7 +98,9 @@ export default function ElderlyDetailClient({
           {activeTab === "recuerdos" && (
             <Memories elderlyId={profile.id} canAdd={role === "owner"} />
           )}
-          {activeTab === "chatear" && <Chat elderlyId={profile.id} />}
+          {activeTab === "chatear" && (
+            <Chat elderlyId={profile.id} elderlyName={profile.name} />
+          )}
         </div>
       </div>
     </div>
