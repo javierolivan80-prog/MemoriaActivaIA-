@@ -28,7 +28,7 @@ export default async function PricingPage({
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-16">
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-3xl">
         <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
           Elige un plan
         </h1>

@@ -100,6 +100,13 @@ interface ExistingRetellIds {
   llmId?: string | null;
 }
 
+// Claude Haiku 4.5: cheapest Claude tier Retell offers, keeps cost/minute low.
+const RETELL_LLM_MODEL = "claude-4.5-haiku" as const;
+
+// Standard (non-premium) Cartesia voice with a Spain Spanish accent.
+// ElevenLabs voices cost noticeably more per minute, so they're avoided here.
+const DEFAULT_RETELL_VOICE_ID = "cartesia-Isabel";
+
 export async function createRetellAgent(
   profile: ElderlyProfile,
   recentMemories: Memory[] = [],
@@ -112,17 +119,19 @@ export async function createRetellAgent(
 
   const llm = existing?.llmId
     ? await client.llm.update(existing.llmId, {
+        model: RETELL_LLM_MODEL,
         general_prompt: generalPrompt,
         begin_message: beginMessage,
       })
     : await client.llm.create({
+        model: RETELL_LLM_MODEL,
         general_prompt: generalPrompt,
         begin_message: beginMessage,
       });
 
   const agentParams = {
     response_engine: { llm_id: llm.llm_id, type: "retell-llm" as const },
-    voice_id: process.env.RETELL_VOICE_ID!,
+    voice_id: process.env.RETELL_VOICE_ID || DEFAULT_RETELL_VOICE_ID,
     agent_name: `Memoria Activa - ${profile.name}`,
     language: "es-ES" as const,
     webhook_url: webhookUrl,

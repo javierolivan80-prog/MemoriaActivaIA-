@@ -4,7 +4,7 @@ import { getStripeClient } from "@/lib/stripe/server";
 import { getPriceIdForPlan } from "@/lib/stripe/priceMap";
 import type { PlanType } from "@/types";
 
-const VALID_PLANS: PlanType[] = ["basic", "care", "premium"];
+const VALID_PLANS: PlanType[] = ["esencial", "completo"];
 
 export async function POST(request: Request) {
   const supabase = await createClient();

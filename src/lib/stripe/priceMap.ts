@@ -2,9 +2,8 @@ import type { PlanType } from "./plans";
 
 export function getPriceIdForPlan(planType: PlanType): string {
   const priceIds: Record<PlanType, string | undefined> = {
-    basic: process.env.STRIPE_PRICE_BASIC,
-    care: process.env.STRIPE_PRICE_CARE,
-    premium: process.env.STRIPE_PRICE_PREMIUM,
+    esencial: process.env.STRIPE_PRICE_ESENCIAL,
+    completo: process.env.STRIPE_PRICE_COMPLETO,
   };
 
   const priceId = priceIds[planType];
@@ -15,8 +14,7 @@ export function getPriceIdForPlan(planType: PlanType): string {
 }
 
 export function getPlanTypeForPriceId(priceId: string): PlanType | null {
-  if (priceId === process.env.STRIPE_PRICE_BASIC) return "basic";
-  if (priceId === process.env.STRIPE_PRICE_CARE) return "care";
-  if (priceId === process.env.STRIPE_PRICE_PREMIUM) return "premium";
+  if (priceId === process.env.STRIPE_PRICE_ESENCIAL) return "esencial";
+  if (priceId === process.env.STRIPE_PRICE_COMPLETO) return "completo";
   return null;
 }

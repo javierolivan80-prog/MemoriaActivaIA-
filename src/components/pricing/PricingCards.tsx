@@ -69,10 +69,10 @@ export default function PricingCards({
         <p className="mb-6 text-center text-base text-red-600">{error}</p>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-3">
+      <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
         {PLAN_ORDER.map((planType) => {
           const plan = PLANS[planType];
-          const isPopular = planType === "care";
+          const isPopular = planType === "completo";
 
           return (
             <div

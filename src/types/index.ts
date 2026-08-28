@@ -23,9 +23,9 @@ export interface ElderlyProfile {
   retell_llm_id: string | null;
 }
 
-export type PlanType = "basic" | "care" | "premium";
-export type CallsPerDay = 1 | 2 | 3;
-export type MinutesPerCall = 5 | 10 | 15;
+export type PlanType = "esencial" | "completo";
+export type CallsPerDay = 1 | 2;
+export type MinutesPerCall = 4;
 export type SubscriptionStatus =
   | "active"
   | "past_due"
