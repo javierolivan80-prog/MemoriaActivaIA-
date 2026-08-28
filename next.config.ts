@@ -1,10 +1,17 @@
 import type { NextConfig } from "next";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const isDev = process.env.NODE_ENV !== "production";
+
+// Turbopack/React dev tooling needs eval() for HMR and debugging; React
+// never uses eval() in production, so this is dev-only.
+const scriptSrc = isDev
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com"
+  : "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com";
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  scriptSrc,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabaseUrl}`,
   "font-src 'self' data:",
