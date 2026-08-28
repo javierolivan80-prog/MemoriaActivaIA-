@@ -5,8 +5,7 @@ export type ElderlyRole = ElderlyAccessRole;
 
 /**
  * Returns the caller's role on an elderly profile, or null if they have no
- * access at all. Ownership-only for now; extended to check
- * elderly_profile_access once multi-user sharing lands.
+ * accepted access at all.
  */
 export async function getElderlyAccessRole(
   supabase: SupabaseClient,
@@ -14,11 +13,12 @@ export async function getElderlyAccessRole(
   elderlyId: string
 ): Promise<ElderlyRole | null> {
   const { data } = await supabase
-    .from("elderly_profiles")
-    .select("id")
-    .eq("id", elderlyId)
+    .from("elderly_profile_access")
+    .select("role")
+    .eq("elderly_id", elderlyId)
     .eq("user_id", userId)
+    .eq("status", "accepted")
     .maybeSingle();
 
-  return data ? "owner" : null;
+  return (data?.role as ElderlyRole | undefined) ?? null;
 }

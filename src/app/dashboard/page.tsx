@@ -50,7 +50,6 @@ export default async function DashboardPage({
   const { data: profiles } = await supabase
     .from("elderly_profiles")
     .select("*")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .returns<ElderlyProfile[]>();
 

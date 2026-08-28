@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
 import EditProfileForm from "@/components/elderly/EditProfileForm";
+import AccessPanel from "@/components/elderly/AccessPanel";
 import type { ElderlyProfile } from "@/types";
 
 export default async function EditElderlyProfilePage({
@@ -42,6 +43,10 @@ export default async function EditElderlyProfilePage({
         </h1>
         <div className="mt-8">
           <EditProfileForm profile={profile} />
+        </div>
+
+        <div className="mt-12 border-t border-border pt-8">
+          <AccessPanel elderlyId={profile.id} />
         </div>
       </div>
     </div>

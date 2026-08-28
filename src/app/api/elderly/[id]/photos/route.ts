@@ -74,10 +74,10 @@ export async function POST(
   }
 
   const role = await getElderlyAccessRole(supabase, user.id, id);
-  if (!role) {
+  if (role !== "owner") {
     return NextResponse.json(
-      { error: "No tienes acceso a este perfil" },
-      { status: 404 }
+      { error: "No tienes permiso para añadir fotos" },
+      { status: 403 }
     );
   }
 

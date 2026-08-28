@@ -33,6 +33,14 @@ export default function LoginForm() {
       return;
     }
 
+    const pendingInvite = sessionStorage.getItem("pendingInviteToken");
+    if (pendingInvite) {
+      sessionStorage.removeItem("pendingInviteToken");
+      router.push(`/invite/${pendingInvite}`);
+      router.refresh();
+      return;
+    }
+
     router.push("/dashboard");
     router.refresh();
   }

@@ -37,6 +37,13 @@ export default function SignupForm() {
     }
 
     if (data.session) {
+      const pendingInvite = sessionStorage.getItem("pendingInviteToken");
+      if (pendingInvite) {
+        sessionStorage.removeItem("pendingInviteToken");
+        router.push(`/invite/${pendingInvite}`);
+        router.refresh();
+        return;
+      }
       router.push("/dashboard");
       router.refresh();
       return;

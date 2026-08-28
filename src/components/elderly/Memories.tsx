@@ -208,7 +208,13 @@ function Lightbox({
   );
 }
 
-export default function Memories({ elderlyId }: { elderlyId: string }) {
+export default function Memories({
+  elderlyId,
+  canAdd,
+}: {
+  elderlyId: string;
+  canAdd: boolean;
+}) {
   const [photos, setPhotos] = useState<PhotoWithUrl[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -257,11 +263,13 @@ export default function Memories({ elderlyId }: { elderlyId: string }) {
 
   return (
     <div>
-      <div className="flex justify-end">
-        <Button type="button" onClick={() => setShowAddModal(true)}>
-          + Añadir foto
-        </Button>
-      </div>
+      {canAdd && (
+        <div className="flex justify-end">
+          <Button type="button" onClick={() => setShowAddModal(true)}>
+            + Añadir foto
+          </Button>
+        </div>
+      )}
 
       {photos.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-border bg-surface p-12 text-center">

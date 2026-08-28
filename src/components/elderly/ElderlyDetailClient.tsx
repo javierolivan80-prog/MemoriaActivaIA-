@@ -86,7 +86,9 @@ export default function ElderlyDetailClient({
 
         <div className="mt-8">
           {activeTab === "historial" && <Timeline elderlyId={profile.id} />}
-          {activeTab === "recuerdos" && <Memories elderlyId={profile.id} />}
+          {activeTab === "recuerdos" && (
+            <Memories elderlyId={profile.id} canAdd={role === "owner"} />
+          )}
         </div>
       </div>
     </div>
