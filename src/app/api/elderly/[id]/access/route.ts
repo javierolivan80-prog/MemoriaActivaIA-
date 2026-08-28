@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
 import { sendInviteEmail } from "@/lib/email/resend";
+
+const InviteSchema = z.object({
+  email: z.email().max(255),
+});
 
 export async function GET(
   request: Request,
@@ -28,7 +33,7 @@ export async function GET(
 
   const { data: accessRows, error } = await supabase
     .from("elderly_profile_access")
-    .select("*")
+    .select("id, user_id, invited_email, role, status, created_at")
     .eq("elderly_id", id)
     .order("created_at", { ascending: true });
 
@@ -42,16 +47,23 @@ export async function GET(
   const serviceClient = createServiceRoleClient();
   const rowsWithEmail = await Promise.all(
     (accessRows ?? []).map(async (row) => {
-      if (row.invited_email) {
-        return { ...row, email: row.invited_email };
+      const { invited_email, ...rest } = row;
+      const publicRest = {
+        id: rest.id,
+        role: rest.role,
+        status: rest.status,
+        created_at: rest.created_at,
+      };
+      if (invited_email) {
+        return { ...publicRest, email: invited_email };
       }
       if (row.user_id) {
         const { data } = await serviceClient.auth.admin.getUserById(
           row.user_id
         );
-        return { ...row, email: data.user?.email ?? null };
+        return { ...publicRest, email: data.user?.email ?? null };
       }
-      return { ...row, email: null };
+      return { ...publicRest, email: null };
     })
   );
 
@@ -80,16 +92,17 @@ export async function POST(
     );
   }
 
-  const body = await request.json().catch(() => null);
-  const email =
-    typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const rawBody = await request.json().catch(() => null);
+  const parsed = InviteSchema.safeParse(rawBody);
 
-  if (!email || !email.includes("@")) {
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "Introduce un email válido" },
       { status: 400 }
     );
   }
+
+  const email = parsed.data.email.trim().toLowerCase();
 
   const { data: existing } = await supabase
     .from("elderly_profile_access")

@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Image as ImageIcon, Loader2, Trash2, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import type { ElderlyPhoto } from "@/types";
-
-interface PhotoWithUrl extends ElderlyPhoto {
+interface PhotoWithUrl {
+  id: string;
+  caption: string;
+  people_in_photo: string | null;
+  created_at: string;
   signed_url: string | null;
   can_delete: boolean;
 }
