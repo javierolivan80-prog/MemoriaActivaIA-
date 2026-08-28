@@ -19,6 +19,8 @@ export interface ElderlyProfile {
   sensitive_topics: string[];
   active: boolean;
   created_at: string;
+  retell_agent_id: string | null;
+  retell_llm_id: string | null;
 }
 
 export type PlanType = "basic" | "care" | "premium";
@@ -82,5 +84,15 @@ export interface Alert {
   alert_level: AlertLevel;
   message: string;
   is_read: boolean;
+  created_at: string;
+}
+
+export interface CallSummary {
+  id: string;
+  session_id: string;
+  summary: string;
+  important_things: string[];
+  topics_discussed: string[];
+  mood_detected: string | null;
   created_at: string;
 }
