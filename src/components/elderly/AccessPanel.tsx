@@ -5,6 +5,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
+import Reveal from "@/components/ui/Reveal";
 import type { ElderlyAccessRole, ElderlyAccessStatus } from "@/types";
 
 interface AccessRow {
@@ -155,7 +156,7 @@ export default function AccessPanel({ elderlyId }: { elderlyId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-text-primary">
+        <h2 className="font-serif text-2xl text-text-primary">
           Personas con acceso
         </h2>
         <Button type="button" onClick={() => setShowInviteModal(true)}>
@@ -164,10 +165,10 @@ export default function AccessPanel({ elderlyId }: { elderlyId: string }) {
       </div>
 
       <div className="mt-4 space-y-3">
-        {rows.map((row) => (
+        {rows.map((row, index) => (
+          <Reveal key={row.id} delay={index * 60}>
           <div
-            key={row.id}
-            className="flex items-center justify-between rounded-xl border border-border bg-surface p-4"
+            className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-soft"
           >
             <div>
               <p className="text-sm font-medium text-text-primary">
@@ -231,6 +232,7 @@ export default function AccessPanel({ elderlyId }: { elderlyId: string }) {
               </div>
             )}
           </div>
+          </Reveal>
         ))}
       </div>
 

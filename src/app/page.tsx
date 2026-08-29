@@ -182,12 +182,10 @@ export default function Home() {
                 key={benefit.title}
                 className="flex items-start gap-6 py-8 first:pt-0 last:pb-0"
               >
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-secondary-light">
-                  <benefit.icon
-                    className="h-7 w-7 text-secondary"
-                    strokeWidth={1.75}
-                  />
-                </div>
+                <benefit.icon
+                  className="h-9 w-9 shrink-0 text-secondary"
+                  strokeWidth={1.5}
+                />
                 <div>
                   <h3 className="text-xl font-semibold text-text-primary md:text-2xl">
                     {benefit.title}

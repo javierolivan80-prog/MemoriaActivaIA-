@@ -18,6 +18,69 @@
         ],
         "createdAt": "2026-08-29T08:55:42.167Z",
         "reason": "Alerts left-border accent is DESIGN.md's documented signature Alerts component (Components section) — the one place the palette intentionally breaks the calm/no-side-border rule to signal severity. Pre-existing pattern, not introduced by this polish pass."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "22px",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-29T11:36:23.492Z",
+        "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "12px",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-29T11:36:23.620Z",
+        "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "10px",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-29T11:36:23.744Z",
+        "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "15px",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-29T11:36:23.863Z",
+        "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "17px",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-29T11:36:23.984Z",
+        "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-29T11:36:24.099Z",
+        "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "13px",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-29T11:36:24.222Z",
+        "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
       }
     ]
   }

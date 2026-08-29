@@ -10,6 +10,41 @@ function getResendClient(): Resend | null {
   return resendClient;
 }
 
+const COLORS = {
+  background: "#fdf8f3",
+  surface: "#ffffff",
+  border: "#e8dfd5",
+  primary: "#8f5238",
+  textPrimary: "#2d2a26",
+  textSecondary: "#6b6560",
+  textMuted: "#6f665e",
+};
+
+function emailShell(bodyHtml: string): string {
+  return `
+    <div style="background-color: ${COLORS.background}; padding: 40px 16px; font-family: -apple-system, 'Segoe UI', sans-serif;">
+      <div style="max-width: 480px; margin: 0 auto; background-color: ${COLORS.surface}; border: 1px solid ${COLORS.border}; border-radius: 16px; padding: 32px;">
+        <p style="margin: 0 0 24px; font-family: Georgia, serif; font-size: 22px; color: ${COLORS.textPrimary};">
+          Memoria Activa
+        </p>
+        ${bodyHtml}
+      </div>
+      <p style="max-width: 480px; margin: 20px auto 0; text-align: center; font-size: 12px; color: ${COLORS.textMuted};">
+        Hecho con cariño para las familias.
+      </p>
+    </div>
+  `;
+}
+
+function emailButton(href: string, label: string): string {
+  return `
+    <a href="${href}"
+       style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: ${COLORS.primary}; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px; font-family: -apple-system, 'Segoe UI', sans-serif;">
+      ${label}
+    </a>
+  `;
+}
+
 export async function sendInviteEmail({
   to,
   inviterEmail,
@@ -28,18 +63,12 @@ export async function sendInviteEmail({
     from: "Memoria Activa <onboarding@resend.dev>",
     to,
     subject: `${inviterEmail} te ha invitado a Memoria Activa`,
-    html: `
-      <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-        <h1 style="font-size: 20px; color: #2b2118;">Memoria Activa</h1>
-        <p style="font-size: 16px; color: #2b2118; line-height: 1.5;">
-          <strong>${inviterEmail}</strong> te ha invitado a ver el perfil de <strong>${elderlyName}</strong> en Memoria Activa.
-        </p>
-        <a href="${inviteUrl}"
-           style="display: inline-block; margin-top: 16px; padding: 12px 24px; background-color: #8f5238; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
-          Ver invitación
-        </a>
-      </div>
-    `,
+    html: emailShell(`
+      <p style="margin: 0; font-size: 16px; color: ${COLORS.textPrimary}; line-height: 1.6;">
+        <strong>${inviterEmail}</strong> te ha invitado a ver el perfil de <strong>${elderlyName}</strong> y acompañar de cerca cómo está.
+      </p>
+      ${emailButton(inviteUrl, "Ver invitación")}
+    `),
   });
 
   if (error) {
@@ -72,24 +101,20 @@ export async function sendAlertEmail({
     from: "Memoria Activa <onboarding@resend.dev>",
     to,
     subject: `Alerta sobre ${elderlyName}`,
-    html: `
-      <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-        <h1 style="font-size: 20px; color: #2d2a26;">Memoria Activa</h1>
-        <h2 style="font-size: 18px; color: #2d2a26;">Alerta sobre ${elderlyName}</h2>
-        <div style="margin-top: 12px; padding: 16px; border-radius: 12px; background-color: ${levelBg};">
-          <p style="margin: 0; font-size: 16px; color: ${levelColor}; line-height: 1.5;">
-            ${alertMessage}
-          </p>
-        </div>
-        <a href="${dashboardUrl}/elderly/${elderlyId}"
-           style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #8f5238; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
-          Ver en la app
-        </a>
-        <p style="margin-top: 24px; font-size: 13px; color: #6f665e;">
-          Recibes este email porque tienes acceso al perfil de ${elderlyName} en Memoria Activa.
+    html: emailShell(`
+      <p style="margin: 0 0 4px; font-size: 17px; color: ${COLORS.textPrimary}; font-weight: 600;">
+        Sobre ${elderlyName}
+      </p>
+      <div style="margin-top: 12px; padding: 16px; border-radius: 12px; background-color: ${levelBg};">
+        <p style="margin: 0; font-size: 16px; color: ${levelColor}; line-height: 1.5;">
+          ${alertMessage}
         </p>
       </div>
-    `,
+      ${emailButton(`${dashboardUrl}/elderly/${elderlyId}`, "Ver en la app")}
+      <p style="margin-top: 24px; font-size: 13px; color: ${COLORS.textSecondary};">
+        Recibes este email porque tienes acceso al perfil de ${elderlyName} en Memoria Activa.
+      </p>
+    `),
   });
 
   if (error) {

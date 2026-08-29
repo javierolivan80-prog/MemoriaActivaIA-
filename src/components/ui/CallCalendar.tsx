@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, PhoneCall, X } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import Reveal from "@/components/ui/Reveal";
 import type { CalendarDay, CalendarSession } from "@/app/api/elderly/[id]/calendar/route";
 
 const MONTH_NAMES = [
@@ -95,7 +96,7 @@ function DayDetailModal({
     >
       <div className="flex items-start justify-between">
         <div>
-          <h2 id="day-detail-modal-title" className="text-lg font-semibold capitalize text-text-primary">
+          <h2 id="day-detail-modal-title" className="font-serif text-2xl capitalize text-text-primary">
             {formatFullDate(day.date)}
           </h2>
           <p className="text-sm text-text-secondary">
@@ -119,12 +120,12 @@ function DayDetailModal({
       )}
 
       <div className="mt-4 space-y-4">
-        {day.sessions.map((session: CalendarSession) => {
+        {day.sessions.map((session: CalendarSession, index: number) => {
           const mood = session.mood ? MOOD_META[session.mood] ?? DEFAULT_MOOD_META : DEFAULT_MOOD_META;
           const duration = formatDuration(session.duration_seconds);
           return (
+            <Reveal key={session.id} delay={index * 60}>
             <div
-              key={session.id}
               className="rounded-2xl border border-border bg-surface p-5"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -164,6 +165,7 @@ function DayDetailModal({
                 </div>
               )}
             </div>
+            </Reveal>
           );
         })}
       </div>
@@ -254,7 +256,7 @@ export default function CallCalendar({
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h2 className="text-lg font-semibold text-text-primary">
+        <h2 className="font-serif text-xl text-text-primary">
           {MONTH_NAMES[month]} {year}
         </h2>
         <button

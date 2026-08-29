@@ -5,6 +5,7 @@ import { Image as ImageIcon, Loader2, Trash2, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
+import Reveal from "@/components/ui/Reveal";
 interface PhotoWithUrl {
   id: string;
   caption: string;
@@ -79,7 +80,7 @@ function AddPhotoModal({
       contentClassName="w-full max-w-md rounded-2xl bg-surface p-6 shadow-soft"
     >
       <div className="flex items-center justify-between">
-        <h2 id="add-photo-modal-title" className="text-lg font-semibold text-text-primary">
+        <h2 id="add-photo-modal-title" className="font-serif text-2xl text-text-primary">
           Añadir foto
         </h2>
         <button
@@ -259,8 +260,15 @@ export default function Memories({
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-text-muted" />
+      <div
+        role="status"
+        aria-live="polite"
+        className="mt-6 grid animate-pulse grid-cols-2 gap-4 md:grid-cols-4"
+      >
+        <span className="sr-only">Cargando fotos...</span>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="aspect-square rounded-xl bg-surface-alt" />
+        ))}
       </div>
     );
   }
@@ -288,17 +296,17 @@ export default function Memories({
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {photos.map((photo) => (
+          {photos.map((photo, index) => (
+            <Reveal key={photo.id} delay={Math.min(index, 8) * 50}>
             <div
-              key={photo.id}
-              className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl"
+              className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl shadow-soft"
               onClick={() => setLightboxPhoto(photo)}
             >
               {photo.signed_url && (
                 <img
                   src={photo.signed_url}
                   alt={photo.caption}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               )}
               <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/40" />
@@ -321,6 +329,7 @@ export default function Memories({
                 </button>
               )}
             </div>
+            </Reveal>
           ))}
         </div>
       )}

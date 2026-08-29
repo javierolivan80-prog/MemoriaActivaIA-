@@ -70,10 +70,8 @@ export default function SignupForm() {
   if (awaitingConfirmation) {
     return (
       <div className="text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary-light">
-          <Mail className="h-6 w-6 text-secondary" strokeWidth={1.75} />
-        </div>
-        <h1 className="mt-5 text-2xl font-semibold text-text-primary">
+        <Mail className="mx-auto h-9 w-9 text-primary" strokeWidth={1.5} />
+        <h1 className="mt-5 font-serif text-3xl text-text-primary">
           Revisa tu email
         </h1>
         <p className="mt-2 text-text-secondary">
@@ -93,7 +91,7 @@ export default function SignupForm() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-text-primary">
+      <h1 className="font-serif text-3xl text-text-primary">
         Crea tu cuenta
       </h1>
       <p className="mt-2 mb-6 text-text-secondary">

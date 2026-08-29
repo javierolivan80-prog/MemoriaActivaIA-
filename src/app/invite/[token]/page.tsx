@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import EntryShell from "@/components/layout/EntryShell";
 import InviteAuthPrompt from "@/components/invite/InviteAuthPrompt";
 import AcceptInviteButton from "@/components/invite/AcceptInviteButton";
 
@@ -17,9 +18,9 @@ export default async function InvitePage({
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <EntryShell>
         <InviteAuthPrompt token={token} />
-      </div>
+      </EntryShell>
     );
   }
 
@@ -39,17 +40,15 @@ export default async function InvitePage({
 
   if (invite.invited_email !== user.email) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="mx-auto w-full max-w-sm text-center">
-          <h1 className="text-2xl font-semibold text-text-primary">
-            Esta invitación es para otro email
-          </h1>
-          <p className="mt-3 text-text-secondary">
-            La invitación se envió a {invite.invited_email}. Inicia sesión con
-            esa cuenta para aceptarla.
-          </p>
-        </div>
-      </div>
+      <EntryShell>
+        <h1 className="font-serif text-3xl text-text-primary">
+          Esta invitación es para otro email
+        </h1>
+        <p className="mt-3 text-text-secondary">
+          La invitación se envió a {invite.invited_email}. Inicia sesión con
+          esa cuenta para aceptarla.
+        </p>
+      </EntryShell>
     );
   }
 
@@ -70,16 +69,14 @@ export default async function InvitePage({
   );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="mx-auto w-full max-w-sm text-center">
-        <h1 className="text-2xl font-semibold text-text-primary">
-          {inviter.user?.email ?? "Un familiar"} te ha invitado a ver el
-          perfil de {elderlyProfile?.name ?? "un familiar"}
-        </h1>
-        <div className="mt-6">
-          <AcceptInviteButton token={token} elderlyId={invite.elderly_id} />
-        </div>
+    <EntryShell>
+      <h1 className="font-serif text-3xl leading-tight text-text-primary">
+        {inviter.user?.email ?? "Un familiar"} te ha invitado a ver el
+        perfil de {elderlyProfile?.name ?? "un familiar"}
+      </h1>
+      <div className="mt-6">
+        <AcceptInviteButton token={token} elderlyId={invite.elderly_id} />
       </div>
-    </div>
+    </EntryShell>
   );
 }

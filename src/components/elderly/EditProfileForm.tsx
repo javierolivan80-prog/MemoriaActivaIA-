@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
+import Reveal from "@/components/ui/Reveal";
+import { prefersReducedMotion } from "@/lib/motion";
 import type { ElderlyProfile } from "@/types";
 
 function splitList(value: string): string[] {
@@ -41,6 +43,7 @@ export default function EditProfileForm({
     profile.sensitive_topics.join(", ")
   );
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
@@ -73,82 +76,107 @@ export default function EditProfileForm({
       return;
     }
 
+    setSaved(true);
+    await new Promise((resolve) =>
+      setTimeout(resolve, prefersReducedMotion() ? 0 : 600)
+    );
+
     router.push(`/elderly/${profile.id}`);
     router.refresh();
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg space-y-5">
-      <Input
-        label="Nombre completo"
-        name="name"
-        required
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-      />
-      <Input
-        label="Edad"
-        name="age"
-        type="number"
-        min={40}
-        max={120}
-        value={age}
-        onChange={(event) => setAge(event.target.value)}
-      />
-      <Input
-        label="Teléfono"
-        name="phone"
-        type="tel"
-        value={phone}
-        onChange={(event) => setPhone(event.target.value)}
-      />
+    <div className="mx-auto w-full max-w-lg space-y-12">
+      <Reveal>
+        <h2 className="font-serif text-2xl text-text-primary">
+          Datos básicos
+        </h2>
+        <div className="mt-5 space-y-5">
+          <Input
+            label="Nombre completo"
+            name="name"
+            required
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <Input
+            label="Edad"
+            name="age"
+            type="number"
+            min={40}
+            max={120}
+            value={age}
+            onChange={(event) => setAge(event.target.value)}
+          />
+          <Input
+            label="Teléfono"
+            name="phone"
+            type="tel"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+          />
 
-      <label className="flex items-center gap-2 text-sm text-text-secondary">
-        <input
-          type="checkbox"
-          checked={active}
-          onChange={(event) => setActive(event.target.checked)}
-          className="h-4 w-4 rounded border-border"
-        />
-        Perfil activo (recibe llamadas)
-      </label>
+          <label className="flex items-center gap-2 text-sm text-text-secondary">
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={(event) => setActive(event.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Perfil activo (recibe llamadas)
+          </label>
+        </div>
+      </Reveal>
 
-      <Textarea
-        label="Familia"
-        name="family"
-        rows={2}
-        value={familyText}
-        onChange={(event) => setFamilyText(event.target.value)}
-      />
-      <Input
-        label="Intereses y hobbies"
-        name="hobbies"
-        value={hobbiesText}
-        onChange={(event) => setHobbiesText(event.target.value)}
-        hint="Separados por comas"
-      />
-      <Input
-        label="Rutina"
-        name="routines"
-        value={routinesText}
-        onChange={(event) => setRoutinesText(event.target.value)}
-        hint="Separados por comas"
-      />
-      <Input
-        label="Temas favoritos"
-        name="favorite-topics"
-        value={favoriteTopicsText}
-        onChange={(event) => setFavoriteTopicsText(event.target.value)}
-        hint="Separados por comas"
-      />
-      <Textarea
-        label="Temas sensibles"
-        name="sensitive"
-        rows={3}
-        value={sensitiveTopicsText}
-        onChange={(event) => setSensitiveTopicsText(event.target.value)}
-        hint="Separados por comas"
-      />
+      <Reveal delay={60}>
+        <h2 className="font-serif text-2xl text-text-primary">
+          Cómo es {profile.name.split(" ")[0]}
+        </h2>
+        <div className="mt-5 space-y-5">
+          <Textarea
+            label="Familia"
+            name="family"
+            rows={2}
+            value={familyText}
+            onChange={(event) => setFamilyText(event.target.value)}
+          />
+          <Input
+            label="Intereses y hobbies"
+            name="hobbies"
+            value={hobbiesText}
+            onChange={(event) => setHobbiesText(event.target.value)}
+            hint="Separados por comas"
+          />
+          <Input
+            label="Rutina"
+            name="routines"
+            value={routinesText}
+            onChange={(event) => setRoutinesText(event.target.value)}
+            hint="Separados por comas"
+          />
+          <Input
+            label="Temas favoritos"
+            name="favorite-topics"
+            value={favoriteTopicsText}
+            onChange={(event) => setFavoriteTopicsText(event.target.value)}
+            hint="Separados por comas"
+          />
+        </div>
+      </Reveal>
+
+      <Reveal delay={120}>
+        <h2 className="font-serif text-2xl text-text-primary">Privacidad</h2>
+        <div className="mt-5">
+          <Textarea
+            label="Temas sensibles"
+            name="sensitive"
+            rows={3}
+            value={sensitiveTopicsText}
+            onChange={(event) => setSensitiveTopicsText(event.target.value)}
+            hint="Separados por comas"
+          />
+        </div>
+      </Reveal>
 
       {error && (
         <div className="rounded-xl bg-alert-urgent-bg p-4 text-sm text-alert-urgent">
@@ -156,7 +184,7 @@ export default function EditProfileForm({
         </div>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 border-t border-border pt-8">
         <Button
           type="button"
           variant="ghost"
@@ -167,10 +195,15 @@ export default function EditProfileForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={saving || !name.trim()}
+          disabled={saving || saved || !name.trim()}
           className="flex-1"
         >
-          {saving ? (
+          {saved ? (
+            <>
+              <CheckCircle className="animate-pop-in h-4 w-4" />
+              Guardado
+            </>
+          ) : saving ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Guardando...

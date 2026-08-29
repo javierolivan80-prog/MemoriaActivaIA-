@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Clock, Loader2, PhoneCall } from "lucide-react";
 import Button from "@/components/ui/Button";
+import Reveal from "@/components/ui/Reveal";
 interface SessionWithSummary {
   id: string;
   started_at: string;
@@ -67,7 +68,7 @@ function SessionCard({ session }: { session: SessionWithSummary }) {
       <span
         className={`absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-surface ${moodStyle.dot}`}
       />
-      <div className="rounded-2xl border border-border bg-surface p-5 shadow-soft">
+      <div className="rounded-2xl border border-border bg-surface p-5 shadow-soft transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-soft-md">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm font-medium text-text-primary">
             {formatSessionDate(session.started_at)}
@@ -169,8 +170,18 @@ export default function Timeline({ elderlyId }: { elderlyId: string }) {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-text-muted" />
+      <div role="status" aria-live="polite" className="animate-pulse space-y-6">
+        <span className="sr-only">Cargando historial de llamadas...</span>
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="relative pl-10">
+            <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full bg-border" />
+            <div className="rounded-2xl border border-border bg-surface p-5">
+              <div className="h-4 w-32 rounded bg-surface-alt" />
+              <div className="mt-3 h-3 w-full rounded bg-surface-alt" />
+              <div className="mt-2 h-3 w-3/4 rounded bg-surface-alt" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -192,8 +203,10 @@ export default function Timeline({ elderlyId }: { elderlyId: string }) {
   return (
     <div>
       <div className="relative space-y-6 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-px before:bg-border">
-        {sessions.map((session) => (
-          <SessionCard key={session.id} session={session} />
+        {sessions.map((session, index) => (
+          <Reveal key={session.id} delay={Math.min(index, 6) * 60}>
+            <SessionCard session={session} />
+          </Reveal>
         ))}
       </div>
 

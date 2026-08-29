@@ -10,8 +10,8 @@ export default function InviteAuthPrompt({ token }: { token: string }) {
   }, [token]);
 
   return (
-    <div className="mx-auto w-full max-w-sm text-center">
-      <h1 className="text-2xl font-semibold text-text-primary">
+    <div>
+      <h1 className="font-serif text-3xl text-text-primary">
         Te han invitado a Memoria Activa
       </h1>
       <p className="mt-3 text-text-secondary">

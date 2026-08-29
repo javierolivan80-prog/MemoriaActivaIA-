@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PricingCards from "@/components/pricing/PricingCards";
-import Card from "@/components/ui/Card";
+import Reveal from "@/components/ui/Reveal";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import type { ElderlyProfile } from "@/types";
 
@@ -30,23 +30,20 @@ export default async function PricingPage({
     .returns<ElderlyProfile[]>();
 
   return (
-    <div className="min-h-screen bg-background px-4 py-16">
+    <div className="min-h-screen bg-background px-4 py-16 sm:py-20">
       <div className="mx-auto w-full max-w-5xl">
-        <h1 className="text-center font-serif text-4xl text-text-primary">
-          Elige cómo acompañarle
-        </h1>
-        <p className="mt-3 text-center text-lg text-text-secondary">
-          Cambia o cancela cuando quieras, sin permanencia
-        </p>
-
         {(!profiles || profiles.length === 0) && (
-          <Card className="mx-auto mt-10 max-w-md text-center">
+          <Reveal className="mx-auto max-w-md text-center">
             <UserPlus
               className="mx-auto h-10 w-10 text-primary"
               strokeWidth={1.5}
             />
-            <p className="mt-4 text-lg text-text-secondary">
-              Añade primero un familiar para poder elegir un plan.
+            <h1 className="mt-5 font-serif text-3xl text-text-primary">
+              Añade primero un familiar
+            </h1>
+            <p className="mt-3 text-lg text-text-secondary">
+              Necesitas crear su perfil antes de poder elegir un plan para
+              él o ella.
             </p>
             <Link
               href="/profile/new"
@@ -54,7 +51,7 @@ export default async function PricingPage({
             >
               Añadir familiar
             </Link>
-          </Card>
+          </Reveal>
         )}
 
         {profiles && profiles.length > 0 && (
