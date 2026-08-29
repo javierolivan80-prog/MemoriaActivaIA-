@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { initiateCallForElderly } from "@/lib/calls/initiateCall";
+import { getQstashClient } from "@/lib/qstash";
 
 const TIMEZONE = "Europe/Madrid";
 
@@ -22,6 +22,19 @@ function getMadridDateHour(date: Date): { dateKey: string; hour: number } {
   // Some engines format midnight as "24" with hour12: false.
   const hour = map.hour === "24" ? 0 : Number(map.hour);
   return { dateKey: `${map.year}-${map.month}-${map.day}`, hour };
+}
+
+// Converts a Madrid wall-clock hour on a given calendar date into the
+// absolute UTC instant it represents, correctly accounting for whatever
+// DST offset applies on that specific date (no hardcoded +1/+2). Standard
+// "guess as UTC, measure the error via the timezone, correct" trick since
+// there is no first-party UTC-from-zoned-wall-clock API in this runtime.
+function madridDateAtHour(dateKey: string, hour: number): Date {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const guess = new Date(Date.UTC(year, month - 1, day, hour, 0, 0));
+  const { hour: shownHour } = getMadridDateHour(guess);
+  const diffHours = shownHour - hour;
+  return new Date(guess.getTime() - diffHours * 60 * 60 * 1000);
 }
 
 function getScheduledHours(
@@ -61,9 +74,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    return NextResponse.json(
+      { error: "Falta configurar NEXT_PUBLIC_APP_URL" },
+      { status: 500 }
+    );
+  }
+
   const supabase = createServiceRoleClient();
+  const qstash = getQstashClient();
   const now = new Date();
-  const { dateKey: todayKey, hour: currentHour } = getMadridDateHour(now);
+  const { dateKey: todayKey } = getMadridDateHour(now);
 
   const { data: activeSubscriptions } = await supabase
     .from("subscriptions")
@@ -74,11 +96,20 @@ export async function GET(request: Request) {
     .returns<ActiveSubscriptionRow[]>();
 
   const seenElderlyIds = new Set<string>();
-  const triggered: Array<{ elderlyId: string; name: string; callId: string }> =
-    [];
+  const scheduled: Array<{ elderlyId: string; name: string; at: string }> = [];
   const skipped: Array<{ elderlyId: string; name: string; reason: string }> =
     [];
 
+  // This run's only job is to plan today: for every eligible profile, work
+  // out every call slot due today (one for Esencial, two spaced apart for
+  // Completo) and hand each one to QStash as a delayed callback aimed at
+  // /api/calls/scheduled-trigger. Nothing here calls Retell directly —
+  // Vercel Hobby's cron can only fire once a day, so a single run cannot
+  // itself wait around for each family's preferred hour; QStash is what
+  // actually places the call later, at the right instant, without this
+  // function staying alive. The deduplication id (elderlyId+date+hour)
+  // makes rerunning this route safe: re-scheduling an already-scheduled
+  // slot is a no-op on QStash's side, not a duplicate call.
   for (const row of activeSubscriptions ?? []) {
     const profile = row.elderly_profiles;
     if (!profile || seenElderlyIds.has(profile.id)) continue;
@@ -98,60 +129,41 @@ export async function GET(request: Request) {
       profile.preferred_call_time
     );
 
-    if (!scheduledHours.includes(currentHour)) {
-      skipped.push({
-        elderlyId: profile.id,
-        name: profile.name,
-        reason: `no toca llamar a esta hora (horario: ${scheduledHours.join("h, ")}h, hora actual: ${currentHour}h)`,
-      });
-      continue;
-    }
+    for (const hour of scheduledHours) {
+      const targetDate = madridDateAtHour(todayKey, hour);
+      const notBefore = Math.floor(targetDate.getTime() / 1000);
 
-    // Look back 20h so "today" is covered regardless of UTC/Madrid offset.
-    const since = new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString();
-    const { data: recentSessions } = await supabase
-      .from("conversation_sessions")
-      .select("started_at")
-      .eq("elderly_id", profile.id)
-      .gte("started_at", since);
-
-    const alreadyCalledThisSlot = (recentSessions ?? []).some((session) => {
-      const { dateKey, hour } = getMadridDateHour(new Date(session.started_at));
-      return dateKey === todayKey && hour === currentHour;
-    });
-
-    if (alreadyCalledThisSlot) {
-      skipped.push({
-        elderlyId: profile.id,
-        name: profile.name,
-        reason: "ya se llamó en este horario hoy",
-      });
-      continue;
-    }
-
-    const result = await initiateCallForElderly(supabase, profile.id);
-
-    if (result.ok) {
-      triggered.push({
-        elderlyId: profile.id,
-        name: profile.name,
-        callId: result.callId,
-      });
-    } else {
-      skipped.push({
-        elderlyId: profile.id,
-        name: profile.name,
-        reason: result.error,
-      });
+      try {
+        await qstash.publishJSON({
+          url: `${appUrl}/api/calls/scheduled-trigger`,
+          body: { elderlyId: profile.id },
+          notBefore,
+          deduplicationId: `${profile.id}-${todayKey}-${hour}`,
+        });
+        scheduled.push({
+          elderlyId: profile.id,
+          name: profile.name,
+          at: targetDate.toISOString(),
+        });
+      } catch (error) {
+        skipped.push({
+          elderlyId: profile.id,
+          name: profile.name,
+          reason:
+            error instanceof Error
+              ? `no se pudo programar: ${error.message}`
+              : "no se pudo programar la llamada",
+        });
+      }
     }
   }
 
   return NextResponse.json({
-    checkedAt: now.toISOString(),
-    madridHour: currentHour,
-    triggeredCount: triggered.length,
+    plannedAt: now.toISOString(),
+    dateKey: todayKey,
+    scheduledCount: scheduled.length,
     skippedCount: skipped.length,
-    triggered,
+    scheduled,
     skipped,
   });
 }
