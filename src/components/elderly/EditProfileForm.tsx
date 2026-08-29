@@ -8,6 +8,8 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Reveal from "@/components/ui/Reveal";
 import { prefersReducedMotion } from "@/lib/motion";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
+import { isValidSpanishPhone } from "@/lib/validation";
 import type { ElderlyProfile } from "@/types";
 
 function splitList(value: string): string[] {
@@ -47,12 +49,17 @@ export default function EditProfileForm({
   const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
+    if (!isValidSpanishPhone(phone)) {
+      setError("El teléfono no parece un número español válido.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
     const hobbiesList = splitList(hobbiesText);
 
-    const response = await fetch(`/api/elderly/${profile.id}`, {
+    const response = await apiFetch(`/api/elderly/${profile.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -70,6 +77,11 @@ export default function EditProfileForm({
     });
 
     setSaving(false);
+
+    if (!response) {
+      setError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
 
     if (!response.ok) {
       setError("No se pudo guardar el perfil. Inténtalo de nuevo.");
@@ -114,6 +126,12 @@ export default function EditProfileForm({
             type="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
+            hint="Número español: empieza por 6, 7, 8 o 9"
+            error={
+              phone.trim() && !isValidSpanishPhone(phone)
+                ? "Ese número no parece válido. Debe ser un móvil español de 9 dígitos."
+                : undefined
+            }
           />
 
           <label className="flex items-center gap-2 text-sm text-text-secondary">
@@ -195,7 +213,7 @@ export default function EditProfileForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={saving || saved || !name.trim()}
+          disabled={saving || saved || !name.trim() || !isValidSpanishPhone(phone)}
           className="flex-1"
         >
           {saved ? (

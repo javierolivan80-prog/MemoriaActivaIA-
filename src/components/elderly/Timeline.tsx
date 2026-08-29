@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, Loader2, PhoneCall } from "lucide-react";
+import { AlertCircle, Clock, Loader2, PhoneCall } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Reveal from "@/components/ui/Reveal";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 interface SessionWithSummary {
   id: string;
   started_at: string;
@@ -75,7 +76,7 @@ function SessionCard({ session }: { session: SessionWithSummary }) {
           </span>
           {duration && (
             <span className="inline-flex items-center gap-1.5 text-sm text-text-muted">
-              <Clock className="h-3.5 w-3.5" />
+              <Clock aria-hidden className="h-3.5 w-3.5" />
               {duration}
             </span>
           )}
@@ -135,15 +136,30 @@ export default function Timeline({ elderlyId }: { elderlyId: string }) {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadInitial() {
       setLoading(true);
-      const response = await fetch(
+      setError(null);
+      const response = await apiFetch(
         `/api/elderly/${elderlyId}/sessions?limit=${PAGE_SIZE}&offset=0`
       );
+      if (cancelled) return;
+
+      if (!response) {
+        setError(NETWORK_ERROR_MESSAGE);
+        setLoading(false);
+        return;
+      }
+      if (!response.ok) {
+        setError("No se pudo cargar el historial de llamadas.");
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
       if (cancelled) return;
       setSessions(data.sessions ?? []);
@@ -159,9 +175,22 @@ export default function Timeline({ elderlyId }: { elderlyId: string }) {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const response = await fetch(
+    setError(null);
+    const response = await apiFetch(
       `/api/elderly/${elderlyId}/sessions?limit=${PAGE_SIZE}&offset=${sessions.length}`
     );
+
+    if (!response) {
+      setError(NETWORK_ERROR_MESSAGE);
+      setLoadingMore(false);
+      return;
+    }
+    if (!response.ok) {
+      setError("No se pudieron cargar más llamadas.");
+      setLoadingMore(false);
+      return;
+    }
+
     const data = await response.json();
     setSessions((current) => [...current, ...(data.sessions ?? [])]);
     setHasMore(Boolean(data.hasMore));
@@ -182,6 +211,27 @@ export default function Timeline({ elderlyId }: { elderlyId: string }) {
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (error && sessions.length === 0) {
+    return (
+      <div className="rounded-2xl border border-border bg-surface p-12 text-center">
+        <AlertCircle
+          aria-hidden
+          className="mx-auto h-10 w-10 text-alert-warning"
+          strokeWidth={1.5}
+        />
+        <p className="mt-4 text-lg text-text-secondary">{error}</p>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => window.location.reload()}
+          className="mt-5"
+        >
+          Reintentar
+        </Button>
       </div>
     );
   }
@@ -209,6 +259,12 @@ export default function Timeline({ elderlyId }: { elderlyId: string }) {
           </Reveal>
         ))}
       </div>
+
+      {error && (
+        <p className="mt-4 text-center text-sm text-alert-urgent" role="alert">
+          {error}
+        </p>
+      )}
 
       {hasMore && (
         <div className="mt-6 flex justify-center">

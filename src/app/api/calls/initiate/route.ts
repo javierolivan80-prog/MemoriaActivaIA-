@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { initiateCallForElderly } from "@/lib/calls/initiateCall";
 import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const InitiateCallSchema = z.object({
   elderlyId: z.uuid(),
@@ -16,6 +17,14 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  const allowed = await checkRateLimit(user.id, "call_initiate", 5, 60);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Demasiadas llamadas iniciadas. Inténtalo de nuevo en un rato." },
+      { status: 429 }
+    );
   }
 
   const rawBody = await request.json().catch(() => null);

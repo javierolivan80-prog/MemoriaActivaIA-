@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Loader2, Pencil, Send, Trash2 } from "lucide-react";
+import { AlertCircle, ChevronLeft, Loader2, Pencil, Send, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 import type { FamilyChatMessage, FamilyChatThread } from "@/types";
 
 const SUGGESTIONS = [
@@ -22,6 +23,10 @@ function TypingIndicator() {
       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted" />
     </div>
   );
+}
+
+function makeTempId(): string {
+  return `temp-${Date.now()}`;
 }
 
 function formatThreadDate(iso: string): string {
@@ -54,8 +59,8 @@ function NewThreadModal({
     setError(null);
     try {
       await onCreate(title.trim());
-    } catch {
-      setError("No se pudo crear el chat");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear el chat");
       setCreating(false);
     }
   }
@@ -108,6 +113,7 @@ function ThreadList({
   elderlyName,
   threads,
   loading,
+  loadError,
   activeThreadId,
   onSelect,
   onCreate,
@@ -115,6 +121,7 @@ function ThreadList({
   elderlyName: string;
   threads: FamilyChatThread[];
   loading: boolean;
+  loadError: string | null;
   activeThreadId: string | null;
   onSelect: (id: string) => void;
   onCreate: (title: string) => Promise<void>;
@@ -134,7 +141,14 @@ function ThreadList({
           </div>
         )}
 
-        {!loading && threads.length === 0 && (
+        {!loading && loadError && (
+          <div className="mt-4 flex items-start gap-2 text-sm text-alert-urgent">
+            <AlertCircle aria-hidden className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+            {loadError}
+          </div>
+        )}
+
+        {!loading && !loadError && threads.length === 0 && (
           <p className="mt-4 text-sm text-text-secondary">
             Crea tu primer chat para empezar a preguntar sobre {elderlyName}
           </p>
@@ -207,14 +221,30 @@ function ThreadConversation({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setLoading(true);
-      const response = await fetch(
+      setLoadError(null);
+      const response = await apiFetch(
         `/api/elderly/${elderlyId}/chat?threadId=${thread.id}`
       );
+      if (cancelled) return;
+
+      if (!response) {
+        setLoadError(NETWORK_ERROR_MESSAGE);
+        setLoading(false);
+        return;
+      }
+      if (!response.ok) {
+        setLoadError("No se pudo cargar la conversación.");
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
       if (cancelled) return;
       setMessages(data.messages ?? []);
@@ -237,10 +267,11 @@ function ThreadConversation({
 
     setError(null);
     setInput("");
+    const tempId = makeTempId();
     setMessages((current) => [
       ...current,
       {
-        id: `temp-${Date.now()}`,
+        id: tempId,
         elderly_id: elderlyId,
         thread_id: thread.id,
         user_id: null,
@@ -251,17 +282,30 @@ function ThreadConversation({
     ]);
     setSending(true);
 
-    const response = await fetch(`/api/elderly/${elderlyId}/chat`, {
+    const response = await apiFetch(`/api/elderly/${elderlyId}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ threadId: thread.id, message: trimmed }),
     });
-    const data = await response.json();
 
     setSending(false);
 
-    if (!response.ok) {
-      setError(data.error ?? "No se pudo enviar el mensaje");
+    if (!response) {
+      setMessages((current) => current.filter((m) => m.id !== tempId));
+      setError(NETWORK_ERROR_MESSAGE);
+      setInput(trimmed);
+      return;
+    }
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok || !data?.message) {
+      // The message never actually sent — pull the optimistic bubble back
+      // out rather than leaving it in the log looking delivered, and give
+      // the family member their text back so they don't have to retype it.
+      setMessages((current) => current.filter((m) => m.id !== tempId));
+      setError(data?.error ?? "No se pudo enviar el mensaje");
+      setInput(trimmed);
       return;
     }
 
@@ -275,7 +319,7 @@ function ThreadConversation({
       setRenaming(false);
       return;
     }
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/elderly/${elderlyId}/chat-threads/${thread.id}`,
       {
         method: "PATCH",
@@ -283,19 +327,38 @@ function ThreadConversation({
         body: JSON.stringify({ title }),
       }
     );
+
+    setRenaming(false);
+
+    if (!response) {
+      setTitleDraft(thread.title);
+      setError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
     if (response.ok) {
       onRenamed(title);
+    } else {
+      setTitleDraft(thread.title);
+      setError("No se pudo renombrar el chat. Inténtalo de nuevo.");
     }
-    setRenaming(false);
   }
 
   async function handleDelete() {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/elderly/${elderlyId}/chat-threads/${thread.id}`,
       { method: "DELETE" }
     );
+
+    if (!response) {
+      setConfirmingDelete(false);
+      setError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
     if (response.ok) {
       onDeleted();
+    } else {
+      setConfirmingDelete(false);
+      setError("No se pudo eliminar el chat. Inténtalo de nuevo.");
     }
   }
 
@@ -371,6 +434,11 @@ function ThreadConversation({
       {loading ? (
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-text-muted" />
+        </div>
+      ) : loadError ? (
+        <div className="flex flex-1 flex-col items-center justify-center text-center">
+          <AlertCircle aria-hidden className="h-8 w-8 text-alert-warning" strokeWidth={1.5} />
+          <p className="mt-3 text-text-secondary">{loadError}</p>
         </div>
       ) : (
         <div
@@ -463,6 +531,7 @@ export default function Chat({
 }) {
   const [threads, setThreads] = useState<FamilyChatThread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [showListOnMobile, setShowListOnMobile] = useState(true);
 
@@ -471,7 +540,21 @@ export default function Chat({
 
     async function load() {
       setLoading(true);
-      const response = await fetch(`/api/elderly/${elderlyId}/chat-threads`);
+      setLoadError(null);
+      const response = await apiFetch(`/api/elderly/${elderlyId}/chat-threads`);
+      if (cancelled) return;
+
+      if (!response) {
+        setLoadError(NETWORK_ERROR_MESSAGE);
+        setLoading(false);
+        return;
+      }
+      if (!response.ok) {
+        setLoadError("No se pudieron cargar los chats.");
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
       if (cancelled) return;
       setThreads(data.threads ?? []);
@@ -485,13 +568,16 @@ export default function Chat({
   }, [elderlyId]);
 
   async function handleCreateThread(title: string) {
-    const response = await fetch(`/api/elderly/${elderlyId}/chat-threads`, {
+    const response = await apiFetch(`/api/elderly/${elderlyId}/chat-threads`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title }),
     });
-    if (!response.ok) throw new Error("failed");
-    const data = await response.json();
+    if (!response) throw new Error(NETWORK_ERROR_MESSAGE);
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.thread) {
+      throw new Error(data?.error ?? "No se pudo crear el chat");
+    }
     setThreads((current) => [data.thread, ...current]);
     setActiveThreadId(data.thread.id);
     setShowListOnMobile(false);
@@ -540,6 +626,7 @@ export default function Chat({
           elderlyName={elderlyName}
           threads={threads}
           loading={loading}
+          loadError={loadError}
           activeThreadId={activeThreadId}
           onSelect={handleSelectThread}
           onCreate={handleCreateThread}

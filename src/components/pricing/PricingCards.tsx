@@ -5,6 +5,7 @@ import { Check, Loader2 } from "lucide-react";
 import { inputClasses } from "@/components/ui/Input";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import Reveal from "@/components/ui/Reveal";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 import { PLAN_ORDER, PLANS } from "@/lib/stripe/plans";
 import type { ElderlyProfile, PlanType } from "@/types";
 
@@ -27,17 +28,23 @@ export default function PricingCards({
     setError(null);
     setLoadingPlan(planType);
 
-    const response = await fetch("/api/stripe/checkout", {
+    const response = await apiFetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ planType, elderlyId }),
     });
 
-    const data = await response.json();
-
-    if (!response.ok || !data.url) {
+    if (!response) {
       setLoadingPlan(null);
-      setError(data.error ?? "No se pudo iniciar el pago. Inténtalo de nuevo.");
+      setError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok || !data?.url) {
+      setLoadingPlan(null);
+      setError(data?.error ?? "No se pudo iniciar el pago. Inténtalo de nuevo.");
       return;
     }
 

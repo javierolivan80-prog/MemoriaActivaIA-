@@ -81,6 +81,15 @@
         ],
         "createdAt": "2026-08-29T11:36:24.222Z",
         "reason": "email HTML is inline-styled for client compatibility, cannot use Tailwind/CSS-variable tokens"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/app/dashboard/page.tsx"
+        ],
+        "createdAt": "2026-08-29T12:23:27.643Z",
+        "reason": "reuses DESIGN.md's documented Alerts signature component pattern (severity-tinted border-l-4), not generic slop — same treatment already used by AlertsPanel.tsx"
       }
     ]
   }

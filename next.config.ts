@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : "";
 const isDev = process.env.NODE_ENV !== "production";
 
 // Turbopack/React dev tooling needs eval() for HMR and debugging; React
@@ -23,6 +24,11 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: supabaseHostname
+      ? [{ protocol: "https", hostname: supabaseHostname }]
+      : [],
+  },
   async headers() {
     return [
       {

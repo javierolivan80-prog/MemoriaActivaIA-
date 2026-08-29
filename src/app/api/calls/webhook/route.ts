@@ -71,18 +71,36 @@ export async function POST(request: Request) {
     })
     .eq("id", session.id);
 
-  if (event === "call_ended" && call.transcript && !alreadyHasTranscript) {
+  if (
+    (event === "call_ended" || event === "call_analyzed") &&
+    call.transcript &&
+    !alreadyHasTranscript
+  ) {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/calls/summarize`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-internal-secret": process.env.INTERNAL_API_SECRET!,
-        },
-        body: JSON.stringify({ sessionId: session.id }),
-      });
-    } catch {
-      // The summary can be retried later; don't fail the webhook ack for it.
+      const summarizeResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/calls/summarize`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": process.env.INTERNAL_API_SECRET!,
+          },
+          body: JSON.stringify({ sessionId: session.id }),
+        }
+      );
+      if (!summarizeResponse.ok) {
+        console.error(
+          `Failed to trigger summary for session ${session.id}: ${summarizeResponse.status}`
+        );
+      }
+    } catch (error) {
+      // Not fatal for the webhook ack, but must be visible — otherwise a
+      // family can be left with a completed call that never got a summary
+      // or an alert, with nothing distinguishing that from "all is well".
+      console.error(
+        `Failed to trigger summary for session ${session.id}`,
+        error
+      );
     }
   }
 

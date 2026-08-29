@@ -6,11 +6,13 @@ export const inputClasses =
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   hint?: string;
+  error?: string;
 }
 
 export default function Input({
   label,
   hint,
+  error,
   id,
   name,
   className = "",
@@ -29,10 +31,28 @@ export default function Input({
       <input
         id={inputId}
         name={name}
-        className={`${inputClasses} ${className}`}
+        aria-invalid={Boolean(error)}
+        aria-describedby={
+          error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+        }
+        className={`${inputClasses} ${
+          error
+            ? "border-alert-urgent focus:border-alert-urgent focus:ring-alert-urgent/30"
+            : ""
+        } ${className}`}
         {...props}
       />
-      {hint && <p className="mt-1.5 text-sm text-text-muted">{hint}</p>}
+      {error ? (
+        <p id={`${inputId}-error`} className="mt-1.5 text-sm text-alert-urgent">
+          {error}
+        </p>
+      ) : (
+        hint && (
+          <p id={`${inputId}-hint`} className="mt-1.5 text-sm text-text-muted">
+            {hint}
+          </p>
+        )
+      )}
     </div>
   );
 }

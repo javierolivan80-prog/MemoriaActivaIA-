@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle, PhoneCall, UserPlus } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, PhoneCall, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
 import AlertsPanel, { type AlertItem } from "@/components/dashboard/AlertsPanel";
@@ -17,6 +17,59 @@ interface AlertRow {
   alert_level: 1 | 2 | 3;
   created_at: string;
   elderly_profiles: { name: string } | null;
+}
+
+interface RecentSessionRow {
+  id: string;
+  elderly_id: string;
+  status: string;
+  started_at: string;
+  call_summaries: { id: string }[];
+  elderly_profiles: { name: string } | null;
+}
+
+interface CallIssue {
+  elderlyId: string;
+  name: string;
+  kind: "failed" | "no_answer" | "processing" | "analysis_failed";
+}
+
+const CALL_ISSUE_COPY: Record<
+  CallIssue["kind"],
+  { icon: typeof AlertCircle; tone: "warning" | "info"; message: (name: string) => string }
+> = {
+  failed: {
+    icon: AlertCircle,
+    tone: "warning",
+    message: (name) =>
+      `La llamada a ${name} no se pudo completar. Lo intentaremos de nuevo en el próximo horario.`,
+  },
+  no_answer: {
+    icon: AlertCircle,
+    tone: "warning",
+    message: (name) =>
+      `${name} no contestó a la llamada de hoy. Lo intentaremos de nuevo en el próximo horario.`,
+  },
+  processing: {
+    icon: Clock,
+    tone: "info",
+    message: (name) =>
+      `Estamos terminando de procesar la última llamada a ${name}. El resumen aparecerá en breve.`,
+  },
+  analysis_failed: {
+    icon: AlertCircle,
+    tone: "warning",
+    message: (name) =>
+      `La llamada a ${name} se completó, pero no pudimos generar un resumen esta vez.`,
+  },
+};
+
+function isoHoursAgo(hours: number): string {
+  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+}
+
+function minutesSince(iso: string): number {
+  return (Date.now() - new Date(iso).getTime()) / 60_000;
 }
 
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
@@ -48,23 +101,40 @@ export default async function DashboardPage({
   const displayName =
     (user.user_metadata?.name as string | undefined) ?? user.email ?? "";
 
-  const { data: profiles } = await supabase
-    .from("elderly_profiles")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .returns<ElderlyProfile[]>();
+  const since48h = isoHoursAgo(48);
 
+  const [profilesResult, alertsResult, subscriptionsResult, recentSessionsResult] =
+    await Promise.all([
+      supabase
+        .from("elderly_profiles")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .returns<ElderlyProfile[]>(),
+      supabase
+        .from("alerts")
+        .select("id, message, alert_level, created_at, elderly_profiles(name)")
+        .eq("user_id", user.id)
+        .eq("is_read", false)
+        .order("created_at", { ascending: false })
+        .returns<AlertRow[]>(),
+      supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .returns<Subscription[]>(),
+      supabase
+        .from("conversation_sessions")
+        .select("id, elderly_id, status, started_at, call_summaries(id), elderly_profiles(name)")
+        .gte("started_at", since48h)
+        .order("started_at", { ascending: false })
+        .returns<RecentSessionRow[]>(),
+    ]);
+
+  const profiles = profilesResult.data;
   const hasProfiles = (profiles?.length ?? 0) > 0;
 
-  const { data: alertRows } = await supabase
-    .from("alerts")
-    .select("id, message, alert_level, created_at, elderly_profiles(name)")
-    .eq("user_id", user.id)
-    .eq("is_read", false)
-    .order("created_at", { ascending: false })
-    .returns<AlertRow[]>();
-
-  const alerts: AlertItem[] = (alertRows ?? []).map((row) => ({
+  const alerts: AlertItem[] = (alertsResult.data ?? []).map((row) => ({
     id: row.id,
     message: row.message,
     alert_level: row.alert_level,
@@ -72,19 +142,56 @@ export default async function DashboardPage({
     elderly_name: row.elderly_profiles?.name ?? "Familiar",
   }));
 
-  const { data: subscriptionRows } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .returns<Subscription[]>();
-
   const latestSubscriptionByElderly = new Map<string, Subscription>();
-  for (const subscription of subscriptionRows ?? []) {
+  for (const subscription of subscriptionsResult.data ?? []) {
     if (!latestSubscriptionByElderly.has(subscription.elderly_id)) {
       latestSubscriptionByElderly.set(subscription.elderly_id, subscription);
     }
   }
+
+  // Surface calls that failed, went unanswered, or finished but still have
+  // no summary after a while — otherwise "no alerts" looks identical to
+  // "we never actually checked in", which is exactly what a worried family
+  // member must never be left wondering about.
+  const callIssueByElderly = new Map<string, CallIssue>();
+  for (const session of recentSessionsResult.data ?? []) {
+    if (callIssueByElderly.has(session.elderly_id)) continue;
+    const name = session.elderly_profiles?.name ?? "tu familiar";
+
+    if (session.status === "failed") {
+      callIssueByElderly.set(session.elderly_id, {
+        elderlyId: session.elderly_id,
+        name,
+        kind: "failed",
+      });
+    } else if (session.status === "no_answer") {
+      callIssueByElderly.set(session.elderly_id, {
+        elderlyId: session.elderly_id,
+        name,
+        kind: "no_answer",
+      });
+    } else if (session.status === "completed" && session.call_summaries.length === 0) {
+      const minutesElapsed = minutesSince(session.started_at);
+      // Under 2 hours: the summary is probably just still being generated.
+      // Past that, the analysis call almost certainly failed outright and
+      // nothing will retry it — say so plainly instead of promising a
+      // summary that is never coming.
+      if (minutesElapsed > 120) {
+        callIssueByElderly.set(session.elderly_id, {
+          elderlyId: session.elderly_id,
+          name,
+          kind: "analysis_failed",
+        });
+      } else if (minutesElapsed > 20) {
+        callIssueByElderly.set(session.elderly_id, {
+          elderlyId: session.elderly_id,
+          name,
+          kind: "processing",
+        });
+      }
+    }
+  }
+  const callIssues = Array.from(callIssueByElderly.values());
 
   return (
     <div className="min-h-screen bg-background px-4 py-16">
@@ -103,6 +210,31 @@ export default async function DashboardPage({
               Perfil creado. Empezaremos a llamar según el horario elegido.
             </p>
           </Reveal>
+        )}
+
+        {callIssues.length > 0 && (
+          <div className="mt-8 space-y-3">
+            {callIssues.map((issue, index) => {
+              const copy = CALL_ISSUE_COPY[issue.kind];
+              const Icon = copy.icon;
+              const toneClasses =
+                copy.tone === "warning"
+                  ? "border-l-alert-warning bg-alert-warning-bg text-alert-warning"
+                  : "border-l-alert-info bg-alert-info-bg text-alert-info";
+              return (
+                <Reveal key={issue.elderlyId} delay={index * 70}>
+                  <div
+                    className={`flex items-start gap-3 rounded-2xl border-l-4 p-4 shadow-soft ${toneClasses}`}
+                  >
+                    <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.75} />
+                    <p className="text-base text-text-primary">
+                      {copy.message(issue.name)}
+                    </p>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
         )}
 
         <div className="mt-12">

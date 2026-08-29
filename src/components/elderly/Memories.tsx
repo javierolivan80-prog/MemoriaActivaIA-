@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Image as ImageIcon, Loader2, Trash2, X } from "lucide-react";
+import Image from "next/image";
+import { AlertCircle, Image as ImageIcon, Loader2, Trash2, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 import Reveal from "@/components/ui/Reveal";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 interface PhotoWithUrl {
   id: string;
   caption: string;
@@ -57,16 +59,27 @@ function AddPhotoModal({
     formData.append("caption", caption.trim());
     if (people.trim()) formData.append("people_in_photo", people.trim());
 
-    const response = await fetch(`/api/elderly/${elderlyId}/photos`, {
+    const response = await apiFetch(`/api/elderly/${elderlyId}/photos`, {
       method: "POST",
       body: formData,
     });
-    const data = await response.json();
 
     setUploading(false);
 
+    if (!response) {
+      setError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
+
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
-      setError(data.error ?? "No se pudo subir la foto");
+      setError(data?.error ?? "No se pudo subir la foto");
+      return;
+    }
+
+    if (!data?.photo) {
+      setError("No se pudo subir la foto");
       return;
     }
 
@@ -227,13 +240,29 @@ export default function Memories({
     null
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setLoading(true);
-      const response = await fetch(`/api/elderly/${elderlyId}/photos`);
+      setLoadError(null);
+      const response = await apiFetch(`/api/elderly/${elderlyId}/photos`);
+      if (cancelled) return;
+
+      if (!response) {
+        setLoadError(NETWORK_ERROR_MESSAGE);
+        setLoading(false);
+        return;
+      }
+      if (!response.ok) {
+        setLoadError("No se pudieron cargar las fotos.");
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
       if (cancelled) return;
       setPhotos(data.photos ?? []);
@@ -248,12 +277,21 @@ export default function Memories({
 
   async function handleDelete(photoId: string) {
     setDeletingId(photoId);
-    const response = await fetch(
+    setDeleteError(null);
+    const response = await apiFetch(
       `/api/elderly/${elderlyId}/photos/${photoId}`,
       { method: "DELETE" }
     );
+
+    if (!response) {
+      setDeleteError(NETWORK_ERROR_MESSAGE);
+      setDeletingId(null);
+      return;
+    }
     if (response.ok) {
       setPhotos((current) => current.filter((photo) => photo.id !== photoId));
+    } else {
+      setDeleteError("No se pudo eliminar la foto. Inténtalo de nuevo.");
     }
     setDeletingId(null);
   }
@@ -273,6 +311,27 @@ export default function Memories({
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="mt-6 rounded-2xl border border-border bg-surface p-12 text-center">
+        <AlertCircle
+          aria-hidden
+          className="mx-auto h-10 w-10 text-alert-warning"
+          strokeWidth={1.5}
+        />
+        <p className="mt-4 text-lg text-text-secondary">{loadError}</p>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => window.location.reload()}
+          className="mt-5"
+        >
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div>
       {canAdd && (
@@ -281,6 +340,12 @@ export default function Memories({
             + Añadir foto
           </Button>
         </div>
+      )}
+
+      {deleteError && (
+        <p className="mt-3 text-sm text-alert-urgent" role="alert">
+          {deleteError}
+        </p>
       )}
 
       {photos.length === 0 ? (
@@ -303,10 +368,12 @@ export default function Memories({
               onClick={() => setLightboxPhoto(photo)}
             >
               {photo.signed_url && (
-                <img
+                <Image
                   src={photo.signed_url}
                   alt={photo.caption}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  fill
+                  sizes="(min-width: 768px) 25vw, 50vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               )}
               <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/40" />

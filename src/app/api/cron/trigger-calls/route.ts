@@ -39,6 +39,10 @@ function getScheduledHours(
   return [firstHour];
 }
 
+// Both "active" and "trialing" subscriptions get daily calls — a family in
+// their trial period still expects the calls to happen, not just billing.
+const SCHEDULABLE_STATUSES = ["active", "trialing"];
+
 interface ActiveSubscriptionRow {
   elderly_id: string;
   calls_per_day: number;
@@ -66,7 +70,7 @@ export async function GET(request: Request) {
     .select(
       "elderly_id, calls_per_day, elderly_profiles(id, name, active, preferred_call_time)"
     )
-    .eq("status", "active")
+    .in("status", SCHEDULABLE_STATUSES)
     .returns<ActiveSubscriptionRow[]>();
 
   const seenElderlyIds = new Set<string>();

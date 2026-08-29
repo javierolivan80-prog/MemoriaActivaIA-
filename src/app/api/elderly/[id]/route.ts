@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getElderlyAccessRole } from "@/lib/access/elderlyAccess";
+import { isValidSpanishPhone } from "@/lib/validation";
 
 const stringList = z.array(z.string().trim().max(200)).max(50);
 
 const UpdateProfileSchema = z.object({
   name: z.string().trim().min(1).max(200),
   age: z.number().int().min(0).max(130).nullable(),
-  phone_number: z.string().trim().min(1).max(30),
+  phone_number: z
+    .string()
+    .trim()
+    .refine(isValidSpanishPhone, "Número de teléfono español no válido"),
   active: z.boolean(),
   family_info: z.record(z.string(), z.unknown()),
   interests: stringList,

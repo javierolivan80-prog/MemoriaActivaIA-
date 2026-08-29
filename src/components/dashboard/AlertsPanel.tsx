@@ -5,6 +5,7 @@ import { AlertCircle, AlertTriangle, CheckCircle, Info, Loader2 } from "lucide-r
 import Button from "@/components/ui/Button";
 import Reveal from "@/components/ui/Reveal";
 import { prefersReducedMotion } from "@/lib/motion";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 
 export interface AlertItem {
   id: string;
@@ -71,17 +72,27 @@ export default function AlertsPanel({
   const [alerts, setAlerts] = useState(initialAlerts);
   const [dismissingId, setDismissingId] = useState<string | null>(null);
   const [leavingId, setLeavingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleMarkAsRead(id: string) {
     setDismissingId(id);
+    setError(null);
 
-    const response = await fetch(`/api/alerts/${id}/read`, {
+    const response = await apiFetch(`/api/alerts/${id}/read`, {
       method: "PATCH",
     });
 
     setDismissingId(null);
 
-    if (!response.ok) return;
+    if (!response) {
+      setError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
+
+    if (!response.ok) {
+      setError("No se pudo marcar la alerta como leída. Inténtalo de nuevo.");
+      return;
+    }
 
     setLeavingId(id);
     window.setTimeout(
@@ -110,6 +121,12 @@ export default function AlertsPanel({
           </span>
         )}
       </div>
+
+      {error && (
+        <p className="mt-2 text-sm text-alert-urgent" role="alert">
+          {error}
+        </p>
+      )}
 
       {alerts.length === 0 && (
         <Reveal className="mt-4 rounded-2xl bg-secondary-light p-8 text-center">

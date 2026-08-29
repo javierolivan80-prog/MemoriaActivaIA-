@@ -17,6 +17,8 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { prefersReducedMotion } from "@/lib/motion";
+import { isValidSpanishPhone } from "@/lib/validation";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 
 const TOTAL_STEPS = 6;
 
@@ -25,11 +27,6 @@ function splitList(value: string): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
-}
-
-function isValidSpanishPhone(value: string): boolean {
-  const cleaned = value.replace(/\s+/g, "");
-  return /^(?:\+34|0034)?[6789]\d{8}$/.test(cleaned);
 }
 
 interface ParsedProfile {
@@ -42,14 +39,17 @@ interface ParsedProfile {
 }
 
 async function parseTranscript(transcript: string) {
-  const response = await fetch("/api/onboarding/parse", {
+  const response = await apiFetch("/api/onboarding/parse", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ transcript }),
   });
-  const data = await response.json();
+  if (!response) {
+    throw new Error(NETWORK_ERROR_MESSAGE);
+  }
+  const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(data.error ?? "No se pudo procesar el texto.");
+    throw new Error(data?.error ?? "No se pudo procesar el texto.");
   }
   return data as ParsedProfile;
 }
@@ -310,6 +310,11 @@ export default function OnboardingWizard({
                 onChange={(event) => setPhone(event.target.value)}
                 placeholder="600 123 456"
                 hint="Número español: empieza por 6, 7, 8 o 9"
+                error={
+                  phone.trim() && !isValidSpanishPhone(phone)
+                    ? "Ese número no parece válido. Debe ser un móvil español de 9 dígitos."
+                    : undefined
+                }
               />
             </div>
           </div>

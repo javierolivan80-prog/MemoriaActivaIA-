@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 
 export default function AcceptInviteButton({
   token,
@@ -20,9 +21,15 @@ export default function AcceptInviteButton({
     setLoading(true);
     setError(null);
 
-    const response = await fetch(`/api/invite/${token}/accept`, {
+    const response = await apiFetch(`/api/invite/${token}/accept`, {
       method: "POST",
     });
+
+    if (!response) {
+      setLoading(false);
+      setError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
 
     if (!response.ok) {
       setLoading(false);

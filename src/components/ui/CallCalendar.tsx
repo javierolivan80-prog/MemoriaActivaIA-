@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Clock, PhoneCall, X } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Clock, PhoneCall, X } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Reveal from "@/components/ui/Reveal";
+import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 import type { CalendarDay, CalendarSession } from "@/app/api/elderly/[id]/calendar/route";
 
 const MONTH_NAMES = [
@@ -134,7 +135,7 @@ function DayDetailModal({
                 </span>
                 {duration && (
                   <span className="inline-flex items-center gap-1.5 text-sm text-text-muted">
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock aria-hidden className="h-3.5 w-3.5" />
                     {duration}
                   </span>
                 )}
@@ -187,15 +188,30 @@ export default function CallCalendar({
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
   const [hint, setHint] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setLoading(true);
-      const response = await fetch(
+      setError(null);
+      const response = await apiFetch(
         `/api/elderly/${elderlyId}/calendar?month=${formatMonthParam(year, month)}`
       );
+      if (cancelled) return;
+
+      if (!response) {
+        setError(NETWORK_ERROR_MESSAGE);
+        setLoading(false);
+        return;
+      }
+      if (!response.ok) {
+        setError("No se pudo cargar el calendario.");
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
       if (cancelled) return;
       const map: Record<string, CalendarDay> = {};
@@ -301,7 +317,7 @@ export default function CallCalendar({
                 </span>
               )}
               {hint === cell.key && (
-                <span className="absolute -bottom-6 z-10 rounded-lg bg-text-primary px-2 py-1 text-xs whitespace-nowrap text-white">
+                <span className="absolute -bottom-6 left-1/2 z-10 w-max max-w-[6.5rem] -translate-x-1/2 rounded-lg bg-text-primary px-2 py-1 text-center text-xs leading-tight text-white">
                   Sin llamada este día
                 </span>
               )}
@@ -325,7 +341,14 @@ export default function CallCalendar({
         </span>
       </div>
 
-      {!loading && Object.keys(days).length === 0 && (
+      {!loading && error && (
+        <div className="mt-6 rounded-2xl border border-border bg-surface p-8 text-center">
+          <AlertCircle aria-hidden className="mx-auto h-10 w-10 text-alert-warning" strokeWidth={1.5} />
+          <p className="mt-3 text-text-secondary">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && Object.keys(days).length === 0 && (
         <div className="mt-6 rounded-2xl border border-border bg-surface p-8 text-center">
           <PhoneCall className="mx-auto h-10 w-10 text-text-muted" strokeWidth={1.5} />
           <p className="mt-3 text-text-secondary">
