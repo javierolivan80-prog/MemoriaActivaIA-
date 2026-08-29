@@ -10,7 +10,7 @@ export const buttonVariantClasses: Record<ButtonVariant, string> = {
 };
 
 export const buttonBaseClasses =
-  "inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium transition-[color,background-color,border-color,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:translate-y-0 disabled:border-transparent disabled:bg-surface-alt disabled:text-text-muted";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;

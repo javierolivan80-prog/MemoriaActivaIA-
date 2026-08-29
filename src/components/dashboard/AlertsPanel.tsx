@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle, Info, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import Reveal from "@/components/ui/Reveal";
+import { prefersReducedMotion } from "@/lib/motion";
 
 export interface AlertItem {
   id: string;
@@ -68,6 +70,7 @@ export default function AlertsPanel({
 }) {
   const [alerts, setAlerts] = useState(initialAlerts);
   const [dismissingId, setDismissingId] = useState<string | null>(null);
+  const [leavingId, setLeavingId] = useState<string | null>(null);
 
   async function handleMarkAsRead(id: string) {
     setDismissingId(id);
@@ -78,9 +81,16 @@ export default function AlertsPanel({
 
     setDismissingId(null);
 
-    if (response.ok) {
-      setAlerts((current) => current.filter((alert) => alert.id !== id));
-    }
+    if (!response.ok) return;
+
+    setLeavingId(id);
+    window.setTimeout(
+      () => {
+        setAlerts((current) => current.filter((alert) => alert.id !== id));
+        setLeavingId(null);
+      },
+      prefersReducedMotion() ? 0 : 380
+    );
   }
 
   return (
@@ -90,7 +100,11 @@ export default function AlertsPanel({
           Alertas recientes
         </h2>
         {alerts.length > 0 && (
-          <span className="rounded-full bg-alert-urgent px-3 py-1 text-sm font-medium text-white">
+          <span
+            aria-live="polite"
+            aria-atomic="true"
+            className="animate-pop-in rounded-full bg-alert-urgent px-3 py-1 text-sm font-medium text-white"
+          >
             {alerts.length}{" "}
             {alerts.length === 1 ? "alerta nueva" : "alertas nuevas"}
           </span>
@@ -98,31 +112,44 @@ export default function AlertsPanel({
       </div>
 
       {alerts.length === 0 && (
-        <div className="mt-4 rounded-2xl bg-secondary-light p-8 text-center">
+        <Reveal className="mt-4 rounded-2xl bg-secondary-light p-8 text-center">
           <CheckCircle
-            className="mx-auto h-8 w-8 text-secondary"
+            className="animate-pop-in mx-auto h-8 w-8 text-secondary"
             strokeWidth={1.75}
           />
           <p className="mt-3 text-base text-text-primary">
             Todo en orden, sin alertas pendientes
           </p>
-        </div>
+        </Reveal>
       )}
 
       {alerts.length > 0 && (
         <ul className="mt-4 space-y-3">
-          {alerts.map((alert) => {
+          {alerts.map((alert, index) => {
             const styles = LEVEL_STYLES[alert.alert_level];
             const LevelIcon = LEVEL_ICONS[alert.alert_level];
+            const isLeaving = leavingId === alert.id;
             return (
               <li
                 key={alert.id}
-                className={`flex items-start gap-4 rounded-2xl border-l-4 p-5 shadow-soft ${styles.border} ${styles.bg}`}
+                style={{ animationDelay: `${index * 70}ms` }}
+                className={`step-fade flex items-start gap-4 overflow-hidden rounded-2xl border-l-4 p-5 shadow-soft transition-[opacity,transform,max-height,padding,margin] duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${styles.border} ${styles.bg} ${
+                  isLeaving
+                    ? "max-h-0 -translate-x-2 scale-[0.98] p-0 opacity-0"
+                    : "max-h-96 opacity-100"
+                }`}
               >
-                <LevelIcon
-                  className={`mt-0.5 h-5 w-5 shrink-0 ${styles.icon}`}
-                  strokeWidth={1.75}
-                />
+                {isLeaving ? (
+                  <CheckCircle
+                    className="animate-pop-in mt-0.5 h-5 w-5 shrink-0 text-secondary"
+                    strokeWidth={1.75}
+                  />
+                ) : (
+                  <LevelIcon
+                    className={`mt-0.5 h-5 w-5 shrink-0 ${styles.icon}`}
+                    strokeWidth={1.75}
+                  />
+                )}
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-2">
@@ -141,10 +168,14 @@ export default function AlertsPanel({
                 <Button
                   variant="ghost"
                   onClick={() => handleMarkAsRead(alert.id)}
-                  disabled={dismissingId === alert.id}
+                  disabled={dismissingId === alert.id || isLeaving}
                   className="shrink-0 px-3 py-2 text-sm"
                 >
-                  {dismissingId === alert.id ? "..." : "Marcar como leída"}
+                  {dismissingId === alert.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Marcar como leída"
+                  )}
                 </Button>
               </li>
             );

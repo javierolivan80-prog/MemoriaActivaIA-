@@ -57,7 +57,7 @@ export default function GoogleButton() {
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-surface px-6 py-3 font-medium text-text-primary transition-colors duration-200 hover:bg-surface-alt disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-surface px-6 py-3 font-medium text-text-primary transition-colors duration-200 hover:bg-surface-alt disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-transparent disabled:bg-surface-alt disabled:text-text-muted"
       >
         {loading ? (
           <Loader2 className="h-5 w-5 animate-spin" />

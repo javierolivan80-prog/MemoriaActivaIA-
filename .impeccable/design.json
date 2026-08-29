@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-29T08:38:42.869Z",
+  "title": "Design System: Memoria Activa",
+  "extensions": {
+    "colorMeta": {
+      "background": { "role": "neutral", "displayName": "Cream Linen", "canonical": "#fdf8f3" },
+      "surface": { "role": "neutral", "displayName": "Paper White", "canonical": "#ffffff" },
+      "surface-alt": { "role": "neutral", "displayName": "Toasted Sand", "canonical": "#f5ede4" },
+      "primary": {
+        "role": "primary",
+        "displayName": "Terracotta Clay",
+        "canonical": "#8f5238",
+        "tonalRamp": ["#4a2a1e", "#6b3d2a", "#8f5238", "#c97a5b", "#d99878", "#e6b59c", "#f0ddd3", "#faf1ec"]
+      },
+      "primary-hover": { "role": "primary", "displayName": "Deep Terracotta", "canonical": "#6b3d2a" },
+      "primary-light": { "role": "primary", "displayName": "Clay Light", "canonical": "#f0ddd3" },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Sage Garden",
+        "canonical": "#6b8f71",
+        "tonalRamp": ["#253a29", "#35543a", "#4d6f52", "#6b8f71", "#8ba890", "#abc2af", "#e1ebe2", "#f2f7f3"]
+      },
+      "secondary-light": { "role": "secondary", "displayName": "Sage Light", "canonical": "#e1ebe2" },
+      "text-primary": { "role": "neutral", "displayName": "Espresso Ink", "canonical": "#2d2a26" },
+      "text-secondary": { "role": "neutral", "displayName": "Warm Taupe", "canonical": "#6b6560" },
+      "text-muted": { "role": "neutral", "displayName": "Faded Clay", "canonical": "#6f665e" },
+      "border": { "role": "neutral", "displayName": "Sand Border", "canonical": "#e8dfd5" },
+      "alert-urgent": { "role": "error", "displayName": "Burnt Rust", "canonical": "#c24b3f" },
+      "alert-urgent-bg": { "role": "error", "displayName": "Rust Whisper", "canonical": "#fbeae7" },
+      "alert-warning": { "role": "warning", "displayName": "Honey Amber", "canonical": "#c98a3a" },
+      "alert-warning-bg": { "role": "warning", "displayName": "Amber Whisper", "canonical": "#fbf1e3" },
+      "alert-info": { "role": "info", "displayName": "Dusty Teal", "canonical": "#4a7a8c" },
+      "alert-info-bg": { "role": "info", "displayName": "Teal Whisper", "canonical": "#e8f0f2" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headline only, one per page." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles." },
+      "title": { "displayName": "Title", "purpose": "Page/card headers, plan names." },
+      "body": { "displayName": "Body", "purpose": "Paragraph copy and descriptions." },
+      "label": { "displayName": "Label", "purpose": "Form labels and small UI text." }
+    },
+    "shadows": [
+      { "name": "soft", "value": "0 4px 20px rgba(45, 42, 38, 0.08)", "purpose": "Resting elevation for cards and panels." },
+      { "name": "soft-md", "value": "0 8px 30px rgba(45, 42, 38, 0.1)", "purpose": "Slightly more prominent surfaces, e.g. the scrolled header." }
+    ],
+    "motion": [
+      { "name": "color-transition", "value": "200ms ease (transition-colors)", "purpose": "Default hover/focus transitions on buttons, tabs, and links." },
+      { "name": "progress-ease", "value": "300ms ease-out", "purpose": "Progress bar fill animation." },
+      { "name": "step-fade-in", "value": "0.25s ease-out, translateY(6px) -> 0 with opacity 0 -> 1", "purpose": "Onboarding wizard step transitions." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action button.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Empezar ahora</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 0.75rem; padding: 12px 24px; font-weight: 500; font-family: Inter, system-ui, sans-serif; border: none; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; } .ds-btn-primary { background-color: #8f5238; color: #ffffff; } .ds-btn-primary:hover { background-color: #6b3d2a; } .ds-btn-primary:focus-visible { outline: 2px solid #8f5238; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined secondary action.",
+      "html": "<button class=\"ds-btn ds-btn-secondary\">Ver planes</button>",
+      "css": ".ds-btn-secondary { background-color: transparent; color: #8f5238; border: 1px solid #8f5238; } .ds-btn-secondary:hover { background-color: #f0ddd3; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Low-emphasis action, e.g. nav login/logout.",
+      "html": "<button class=\"ds-btn ds-btn-ghost\">Iniciar sesión</button>",
+      "css": ".ds-btn-ghost { background-color: transparent; color: #2d2a26; border: none; } .ds-btn-ghost:hover { background-color: #f5ede4; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Default content container.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Título</h3><p class=\"ds-card-body\">Contenido de la tarjeta.</p></div>",
+      "css": ".ds-card { background-color: #ffffff; border: 1px solid #e8dfd5; border-radius: 1rem; padding: 24px; box-shadow: 0 4px 20px rgba(45, 42, 38, 0.08); font-family: Inter, system-ui, sans-serif; } .ds-card-title { font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 1.5rem; color: #2d2a26; margin: 0 0 8px; } .ds-card-body { font-size: 1rem; line-height: 1.5; color: #6b6560; margin: 0; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labeled text input.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-name\">Nombre</label><input class=\"ds-input\" id=\"ds-name\" type=\"text\" placeholder=\"Escribe aquí\" /></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; font-family: Inter, system-ui, sans-serif; } .ds-label { font-size: 0.875rem; font-weight: 500; color: #2d2a26; margin-bottom: 8px; } .ds-input { background-color: #ffffff; border: 1px solid #e8dfd5; border-radius: 0.75rem; padding: 12px 16px; font-size: 1rem; color: #2d2a26; } .ds-input::placeholder { color: #6f665e; } .ds-input:focus { outline: none; border-color: #8f5238; box-shadow: 0 0 0 3px rgba(143, 82, 56, 0.3); }"
+    },
+    {
+      "name": "Tabs",
+      "kind": "nav",
+      "refersTo": "tabs",
+      "description": "Underline-style tab navigation.",
+      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab ds-tab-active\">Resumen</button><button class=\"ds-tab\">Calendario</button><button class=\"ds-tab\">Recuerdos</button></div>",
+      "css": ".ds-tabs { display: flex; gap: 24px; border-bottom: 1px solid #e8dfd5; font-family: Inter, system-ui, sans-serif; } .ds-tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 0 4px 12px; font-size: 1rem; font-weight: 500; color: #6b6560; cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease; } .ds-tab:hover { color: #2d2a26; } .ds-tab-active { color: #8f5238; border-bottom-color: #8f5238; }"
+    },
+    {
+      "name": "Alert",
+      "kind": "custom",
+      "refersTo": "alert",
+      "description": "Severity-leveled notification card (urgent / warning / info).",
+      "html": "<div class=\"ds-alert ds-alert-urgent\"><svg class=\"ds-alert-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z\"/></svg><span class=\"ds-alert-message\">Mensaje de alerta importante.</span></div>",
+      "css": ".ds-alert { display: flex; align-items: flex-start; gap: 10px; border-left: 4px solid; border-radius: 0.75rem; padding: 16px; font-family: Inter, system-ui, sans-serif; font-size: 1rem; } .ds-alert-icon { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; } .ds-alert-urgent { background-color: #fbeae7; border-left-color: #c24b3f; color: #c24b3f; } .ds-alert-urgent .ds-alert-message { color: #2d2a26; } .ds-alert-warning { background-color: #fbf1e3; border-left-color: #c98a3a; color: #c98a3a; } .ds-alert-info { background-color: #e8f0f2; border-left-color: #4a7a8c; color: #4a7a8c; }"
+    },
+    {
+      "name": "Featured Pricing Card",
+      "kind": "card",
+      "refersTo": "pricing-card",
+      "description": "Plan card, featured variant with badge.",
+      "html": "<div class=\"ds-pricing-card ds-pricing-card-featured\"><span class=\"ds-pricing-badge\">Más elegido</span><h3 class=\"ds-pricing-name\">Completo</h3><p class=\"ds-pricing-price\">61,99€<span class=\"ds-pricing-period\">/mes</span></p></div>",
+      "css": ".ds-pricing-card { position: relative; background-color: #ffffff; border: 1px solid #e8dfd5; border-radius: 1rem; padding: 32px; box-shadow: 0 4px 20px rgba(45, 42, 38, 0.08); font-family: Inter, system-ui, sans-serif; } .ds-pricing-card-featured { border: 2px solid #8f5238; } .ds-pricing-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background-color: #8f5238; color: #ffffff; font-size: 0.75rem; font-weight: 600; padding: 4px 16px; border-radius: 9999px; } .ds-pricing-name { font-size: 1.5rem; font-weight: 600; color: #2d2a26; margin: 0 0 16px; } .ds-pricing-price { font-size: 2.25rem; font-weight: 600; color: #2d2a26; margin: 0; } .ds-pricing-period { font-size: 1rem; font-weight: 400; color: #6f665e; margin-left: 4px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Sunday Table",
+    "overview": "Memoria Activa's screens should feel like the warmth of family gathered around a table, not a monitoring dashboard. The palette pairs terracotta clay with garden sage on a warm linen background; the Fraunces serif carries the moments meant to feel human (a hero line, a greeting, the wordmark) while Inter handles everything functional. Shadows stay soft and diffuse — never a hard drop shadow — and every corner is rounded, so nothing reads as clinical or corporate. The product's actual job is to reassure someone worried about a parent living alone; the interface earns that trust by feeling unhurried, domestic, and specific to real people rather than generic SaaS chrome.\n\nThis system deliberately rejects cold tech blues, clinical medical-device chrome, and dense corporate-dashboard patterns (data grids, sharp dividers, monospace stat blocks). The one place the system is allowed to feel urgent is the three-level alert system — real severity gets real color, everywhere else stays calm.",
+    "keyCharacteristics": [
+      "Warm terracotta + sage palette on cream linen, never cold gray or blue as a UI accent",
+      "Fraunces serif reserved for feeling-moments; Inter for all interface chrome",
+      "Soft, warm-tinted ambient shadows only — no hard elevation",
+      "Rounded corners everywhere (xl / 2xl / full), no sharp edges",
+      "Severity color (the 3-level alert system) is the one intentional exception to the calm palette"
+    ],
+    "rules": [
+      { "name": "The Severity-Only Rule", "body": "Burnt Rust, Honey Amber, and Dusty Teal exist only inside the alert system. They never appear as decorative accents, chart colors, or brand color anywhere else in the product.", "section": "colors" },
+      { "name": "The Serif-for-Feeling Rule", "body": "Fraunces appears only where the moment should feel human: the hero line, a page greeting (\"Hola {name}\"), the wordmark, section titles. Every interactive element — buttons, nav, labels, form fields — stays in Inter, even when adjacent to serif text.", "section": "typography" },
+      { "name": "The Ambient-Only Rule", "body": "Shadows are always soft, diffuse, and warm-tinted (rgba(45, 42, 38, …), never pure black). If a shadow reads as sharp or heavy, it's wrong for this system.", "section": "elevation" },
+      { "name": "The Oversized Numeral Rule", "body": "A sequential, ordered process (the landing page's \"Así de simple\" steps) earns one giant Fraunces numeral per item — text-8xl/text-9xl, leading-none, tinted to roughly 15% opacity of Terracotta Clay (text-primary/15) so it reads as a quiet structural watermark, not a second headline. This is the system's one deliberate exception to \"Display is the hero headline only, one per page\": the numeral is a graphic device, not text content, and its low opacity keeps the hero the only saturated, full-contrast display moment on the page. Icon roundels are dropped from any list that uses this device.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do reserve Fraunces for feeling-moments (hero line, greetings, the wordmark, section titles) per the Serif-for-Feeling Rule.",
+      "Do keep every shadow soft, diffuse, and warm-tinted per the Ambient-Only Rule.",
+      "Do round every corner — rounded-xl minimum on any interactive element, rounded-2xl on containers, rounded-full on badges/pills/tracks.",
+      "Do reserve Burnt Rust / Honey Amber / Dusty Teal strictly for the alert system per the Severity-Only Rule."
+    ],
+    "donts": [
+      "Don't introduce cold blues, cool grays, or any color outside the terracotta/sage/severity palette as a UI accent.",
+      "Don't use sharp (0-radius) corners anywhere, including on cards, inputs, or data displays.",
+      "Don't use a hard, dark, or crisply-edged drop shadow — it reads as generic SaaS, not this product.",
+      "Don't reach for dense corporate-dashboard patterns (data grids, sharp dividers, monospace stat blocks, cold chrome) even on data-heavy admin screens; find the warm equivalent instead."
+    ]
+  }
+}

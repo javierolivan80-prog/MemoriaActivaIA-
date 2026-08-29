@@ -14,17 +14,16 @@ interface SessionWithSummary {
   }[];
 }
 
-const MOOD_STYLES: Record<string, { dot: string; label: string; emoji: string }> = {
-  positivo: { dot: "bg-secondary", label: "Buen ánimo", emoji: "😊" },
-  neutral: { dot: "bg-alert-warning", label: "Ánimo neutral", emoji: "😐" },
-  negativo: { dot: "bg-alert-warning", label: "Algo bajo de ánimo", emoji: "😕" },
-  preocupante: { dot: "bg-alert-urgent", label: "Preocupado/a", emoji: "😟" },
+const MOOD_STYLES: Record<string, { dot: string; label: string }> = {
+  positivo: { dot: "bg-secondary", label: "Buen ánimo" },
+  neutral: { dot: "bg-alert-warning", label: "Ánimo neutral" },
+  negativo: { dot: "bg-alert-warning", label: "Algo bajo de ánimo" },
+  preocupante: { dot: "bg-alert-urgent", label: "Preocupado/a" },
 };
 
 const DEFAULT_MOOD_STYLE = {
   dot: "bg-text-muted",
   label: "Sin analizar",
-  emoji: "—",
 };
 
 function formatSessionDate(iso: string): string {
@@ -81,8 +80,9 @@ function SessionCard({ session }: { session: SessionWithSummary }) {
           )}
         </div>
 
-        <p className="mt-2 text-sm text-text-secondary">
-          <span aria-hidden>{moodStyle.emoji}</span> {moodStyle.label}
+        <p className="mt-2 flex items-center gap-1.5 text-sm text-text-secondary">
+          <span className={`h-2 w-2 rounded-full ${moodStyle.dot}`} aria-hidden />
+          {moodStyle.label}
         </p>
 
         {summary ? (

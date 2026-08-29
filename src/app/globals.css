@@ -4,14 +4,14 @@
   --color-background: #fdf8f3;
   --color-surface: #ffffff;
   --color-surface-alt: #f5ede4;
-  --color-primary: #c97a5b;
-  --color-primary-hover: #b56847;
+  --color-primary: #8f5238;
+  --color-primary-hover: #6b3d2a;
   --color-primary-light: #f0ddd3;
   --color-secondary: #6b8f71;
   --color-secondary-light: #e1ebe2;
   --color-text-primary: #2d2a26;
   --color-text-secondary: #6b6560;
-  --color-text-muted: #a39d96;
+  --color-text-muted: #6f665e;
   --color-border: #e8dfd5;
   --color-alert-urgent: #c24b3f;
   --color-alert-urgent-bg: #fbeae7;
@@ -32,6 +32,45 @@ body {
   color: var(--color-text-primary);
 }
 
+::selection {
+  background-color: var(--color-primary-light);
+  color: var(--color-text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+input,
+textarea {
+  caret-color: var(--color-primary);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-primary);
+}
+
+* {
+  scrollbar-color: var(--color-primary-light) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary-light);
+  border-radius: 9999px;
+  border: 2px solid var(--color-background);
+}
+
 @keyframes step-fade-in {
   from {
     opacity: 0;
@@ -45,4 +84,122 @@ body {
 
 .step-fade {
   animation: step-fade-in 0.25s ease-out;
+}
+
+@keyframes call-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-call-wave {
+  transform-origin: bottom;
+  animation: call-wave 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes drift-slow {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-1rem, 1.25rem);
+  }
+}
+
+.animate-drift-slow {
+  animation: drift-slow 14s ease-in-out infinite;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes step-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--step-dir, 16px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.step-slide {
+  animation: step-slide-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-message-in {
+  animation: message-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-modal-in {
+  animation: modal-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-backdrop-in {
+  animation: backdrop-in 0.2s ease-out both;
+}
+
+/* Global motion safeguard: every animation and transition in the app
+   (custom keyframes above, Tailwind's animate-* and transition-* utilities,
+   and per-component motion) collapses to near-instant when the user has
+   asked the OS for reduced motion. Add new motion anywhere without
+   re-guarding it by hand. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

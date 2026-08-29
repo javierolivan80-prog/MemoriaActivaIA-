@@ -35,7 +35,7 @@ export async function sendInviteEmail({
           <strong>${inviterEmail}</strong> te ha invitado a ver el perfil de <strong>${elderlyName}</strong> en Memoria Activa.
         </p>
         <a href="${inviteUrl}"
-           style="display: inline-block; margin-top: 16px; padding: 12px 24px; background-color: #C97A5B; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+           style="display: inline-block; margin-top: 16px; padding: 12px 24px; background-color: #8f5238; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
           Ver invitación
         </a>
       </div>
@@ -82,10 +82,10 @@ export async function sendAlertEmail({
           </p>
         </div>
         <a href="${dashboardUrl}/elderly/${elderlyId}"
-           style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #c97a5b; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+           style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #8f5238; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
           Ver en la app
         </a>
-        <p style="margin-top: 24px; font-size: 13px; color: #a39d96;">
+        <p style="margin-top: 24px; font-size: 13px; color: #6f665e;">
           Recibes este email porque tienes acceso al perfil de ${elderlyName} en Memoria Activa.
         </p>
       </div>

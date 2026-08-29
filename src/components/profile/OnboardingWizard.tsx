@@ -1,14 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Pencil, Phone } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  Loader2,
+  Pencil,
+  Phone,
+  Sparkles,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import ProgressBar from "@/components/ui/ProgressBar";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const TOTAL_STEPS = 6;
 
@@ -53,6 +61,7 @@ export default function OnboardingWizard({
 }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState<"forward" | "back">("forward");
 
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
@@ -74,6 +83,7 @@ export default function OnboardingWizard({
   const [callTime2, setCallTime2] = useState("18:00");
 
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const displayName = nickname.trim() || name.trim() || "tu familiar";
@@ -87,14 +97,18 @@ export default function OnboardingWizard({
     6: true,
   }[step as 1 | 2 | 3 | 4 | 5 | 6];
 
-  function goNext() {
+  function goToStep(target: number) {
     setError(null);
-    setStep((current) => Math.min(current + 1, 7));
+    setDirection(target < step ? "back" : "forward");
+    setStep(target);
+  }
+
+  function goNext() {
+    goToStep(Math.min(step + 1, 7));
   }
 
   function goBack() {
-    setError(null);
-    setStep((current) => Math.max(current - 1, 1));
+    goToStep(Math.max(step - 1, 1));
   }
 
   async function handleProcessWithAI() {
@@ -190,6 +204,11 @@ export default function OnboardingWizard({
       return;
     }
 
+    setSaved(true);
+    await new Promise((resolve) =>
+      setTimeout(resolve, prefersReducedMotion() ? 0 : 650)
+    );
+
     router.push("/dashboard?created=success");
     router.refresh();
   }
@@ -203,15 +222,19 @@ export default function OnboardingWizard({
           <button
             type="button"
             onClick={goBack}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary"
+            className="group inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
             Atrás
           </button>
         )}
       </div>
 
-      <div key={step} className="step-fade mt-4">
+      <div
+        key={step}
+        className="step-slide mt-4"
+        style={{ "--step-dir": direction === "back" ? "-16px" : "16px" } as CSSProperties}
+      >
         {step === 1 && (
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">
@@ -273,7 +296,7 @@ export default function OnboardingWizard({
               Le llamaremos desde nuestro número cada día a este teléfono
             </p>
 
-            <div className="mx-auto mt-8 flex h-20 w-20 items-center justify-center rounded-full bg-primary-light">
+            <div className="animate-pop-in mx-auto mt-8 flex h-20 w-20 items-center justify-center rounded-full bg-primary-light">
               <Phone className="h-9 w-9 text-primary" strokeWidth={1.5} />
             </div>
 
@@ -327,46 +350,58 @@ export default function OnboardingWizard({
                   Analizando...
                 </>
               ) : (
-                "✨ Procesar con IA"
+                <>
+                  <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+                  Procesar con IA
+                </>
               )}
             </Button>
 
             {aiProcessed && (
               <div className="mt-6 space-y-4">
-                <p className="rounded-xl bg-secondary-light px-4 py-3 text-sm text-text-primary">
+                <p className="step-fade flex items-center gap-2 rounded-xl bg-secondary-light px-4 py-3 text-sm text-text-primary">
+                  <CheckCircle className="animate-pop-in h-4 w-4 shrink-0 text-secondary" />
                   Esto es lo que hemos entendido. Corrígelo si algo no
                   cuadra.
                 </p>
-                <Textarea
-                  label="Familia"
-                  name="family"
-                  rows={2}
-                  value={familyText}
-                  onChange={(event) => setFamilyText(event.target.value)}
-                />
-                <Input
-                  label="Intereses y hobbies"
-                  name="hobbies"
-                  value={hobbiesText}
-                  onChange={(event) => setHobbiesText(event.target.value)}
-                  hint="Separados por comas"
-                />
-                <Input
-                  label="Rutina"
-                  name="routines"
-                  value={routinesText}
-                  onChange={(event) => setRoutinesText(event.target.value)}
-                  hint="Separados por comas"
-                />
-                <Input
-                  label="Temas favoritos"
-                  name="favorite-topics"
-                  value={favoriteTopicsText}
-                  onChange={(event) =>
-                    setFavoriteTopicsText(event.target.value)
-                  }
-                  hint="Separados por comas"
-                />
+                <div className="step-fade" style={{ animationDelay: "70ms" }}>
+                  <Textarea
+                    label="Familia"
+                    name="family"
+                    rows={2}
+                    value={familyText}
+                    onChange={(event) => setFamilyText(event.target.value)}
+                  />
+                </div>
+                <div className="step-fade" style={{ animationDelay: "120ms" }}>
+                  <Input
+                    label="Intereses y hobbies"
+                    name="hobbies"
+                    value={hobbiesText}
+                    onChange={(event) => setHobbiesText(event.target.value)}
+                    hint="Separados por comas"
+                  />
+                </div>
+                <div className="step-fade" style={{ animationDelay: "170ms" }}>
+                  <Input
+                    label="Rutina"
+                    name="routines"
+                    value={routinesText}
+                    onChange={(event) => setRoutinesText(event.target.value)}
+                    hint="Separados por comas"
+                  />
+                </div>
+                <div className="step-fade" style={{ animationDelay: "220ms" }}>
+                  <Input
+                    label="Temas favoritos"
+                    name="favorite-topics"
+                    value={favoriteTopicsText}
+                    onChange={(event) =>
+                      setFavoriteTopicsText(event.target.value)
+                    }
+                    hint="Separados por comas"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -443,16 +478,16 @@ export default function OnboardingWizard({
             </h1>
 
             <div className="mt-6 space-y-4">
-              <Card className="p-5 sm:p-5">
+              <Card className="step-fade p-5 sm:p-5">
                 <div className="flex items-start justify-between">
                   <h2 className="text-base font-semibold text-text-primary">
                     Datos básicos
                   </h2>
                   <button
                     type="button"
-                    onClick={() => setStep(1)}
+                    onClick={() => goToStep(1)}
                     aria-label="Editar datos básicos"
-                    className="text-text-muted"
+                    className="-m-3.5 rounded-lg p-3.5 text-text-muted transition-[transform,background-color,color] duration-200 hover:scale-110 hover:bg-surface-alt hover:text-text-primary"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -467,16 +502,16 @@ export default function OnboardingWizard({
                 </dl>
               </Card>
 
-              <Card className="p-5 sm:p-5">
+              <Card className="step-fade p-5 sm:p-5" style={{ animationDelay: "60ms" }}>
                 <div className="flex items-start justify-between">
                   <h2 className="text-base font-semibold text-text-primary">
                     Personalidad
                   </h2>
                   <button
                     type="button"
-                    onClick={() => setStep(4)}
+                    onClick={() => goToStep(4)}
                     aria-label="Editar personalidad"
-                    className="text-text-muted"
+                    className="-m-3.5 rounded-lg p-3.5 text-text-muted transition-[transform,background-color,color] duration-200 hover:scale-110 hover:bg-surface-alt hover:text-text-primary"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -491,16 +526,16 @@ export default function OnboardingWizard({
               </Card>
 
               {(aiSensitiveTopics.length > 0 || sensitiveNote.trim()) && (
-                <Card className="p-5 sm:p-5">
+                <Card className="step-fade p-5 sm:p-5" style={{ animationDelay: "120ms" }}>
                   <div className="flex items-start justify-between">
                     <h2 className="text-base font-semibold text-text-primary">
                       Temas sensibles
                     </h2>
                     <button
                       type="button"
-                      onClick={() => setStep(5)}
+                      onClick={() => goToStep(5)}
                       aria-label="Editar temas sensibles"
-                      className="text-text-muted"
+                      className="-m-3.5 rounded-lg p-3.5 text-text-muted transition-[transform,background-color,color] duration-200 hover:scale-110 hover:bg-surface-alt hover:text-text-primary"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -513,16 +548,16 @@ export default function OnboardingWizard({
                 </Card>
               )}
 
-              <Card className="p-5 sm:p-5">
+              <Card className="step-fade p-5 sm:p-5" style={{ animationDelay: "180ms" }}>
                 <div className="flex items-start justify-between">
                   <h2 className="text-base font-semibold text-text-primary">
                     Horario de llamadas
                   </h2>
                   <button
                     type="button"
-                    onClick={() => setStep(6)}
+                    onClick={() => goToStep(6)}
                     aria-label="Editar horario"
-                    className="text-text-muted"
+                    className="-m-3.5 rounded-lg p-3.5 text-text-muted transition-[transform,background-color,color] duration-200 hover:scale-110 hover:bg-surface-alt hover:text-text-primary"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -543,10 +578,15 @@ export default function OnboardingWizard({
             <Button
               type="button"
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || saved}
               className="mt-6 w-full py-4 text-lg"
             >
-              {saving ? (
+              {saved ? (
+                <>
+                  <CheckCircle className="animate-pop-in h-5 w-5" />
+                  ¡Guardado!
+                </>
+              ) : saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Guardando...

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Image as ImageIcon, Loader2, Trash2, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
 interface PhotoWithUrl {
   id: string;
   caption: string;
@@ -72,97 +73,99 @@ function AddPhotoModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-soft">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-text-primary">
-            Añadir foto
-          </h2>
+    <Modal
+      onClose={onClose}
+      labelledBy="add-photo-modal-title"
+      contentClassName="w-full max-w-md rounded-2xl bg-surface p-6 shadow-soft"
+    >
+      <div className="flex items-center justify-between">
+        <h2 id="add-photo-modal-title" className="text-lg font-semibold text-text-primary">
+          Añadir foto
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="-m-3 rounded-lg p-3 text-text-muted transition-colors hover:bg-surface-alt hover:text-text-primary"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="mt-5 space-y-4">
+        {preview ? (
+          <img
+            src={preview}
+            alt="Vista previa"
+            className="aspect-square w-full rounded-xl object-cover"
+          />
+        ) : (
+          <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-text-muted">
+            <ImageIcon className="h-10 w-10" strokeWidth={1.5} />
+            <span className="mt-2 text-sm">Elegir foto</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+        )}
+
+        {preview && (
           <button
             type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="text-text-muted"
+            onClick={() => {
+              setFile(null);
+              setPreview(null);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }}
+            className="text-sm font-medium text-primary"
           >
-            <X className="h-5 w-5" />
+            Cambiar foto
           </button>
-        </div>
+        )}
 
-        <div className="mt-5 space-y-4">
-          {preview ? (
-            <img
-              src={preview}
-              alt="Vista previa"
-              className="aspect-square w-full rounded-xl object-cover"
-            />
+        <Input
+          label="¿Qué se ve en la foto?"
+          name="caption"
+          value={caption}
+          onChange={(event) => setCaption(event.target.value)}
+          placeholder="Ej: Comida familiar en Navidad"
+        />
+
+        <Input
+          label="¿Quién aparece? (opcional)"
+          name="people"
+          value={people}
+          onChange={(event) => setPeople(event.target.value)}
+          placeholder="Ej: Carmen, sus nietos Ana y Luis"
+        />
+
+        {error && (
+          <div className="rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
+            {error}
+          </div>
+        )}
+
+        <Button
+          type="button"
+          onClick={handleUpload}
+          disabled={uploading}
+          className="w-full"
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Subiendo...
+            </>
           ) : (
-            <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-text-muted">
-              <ImageIcon className="h-10 w-10" strokeWidth={1.5} />
-              <span className="mt-2 text-sm">Elegir foto</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
+            "Subir foto"
           )}
-
-          {preview && (
-            <button
-              type="button"
-              onClick={() => {
-                setFile(null);
-                setPreview(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }}
-              className="text-sm font-medium text-primary"
-            >
-              Cambiar foto
-            </button>
-          )}
-
-          <Input
-            label="¿Qué se ve en la foto?"
-            name="caption"
-            value={caption}
-            onChange={(event) => setCaption(event.target.value)}
-            placeholder="Ej: Comida familiar en Navidad"
-          />
-
-          <Input
-            label="¿Quién aparece? (opcional)"
-            name="people"
-            value={people}
-            onChange={(event) => setPeople(event.target.value)}
-            placeholder="Ej: Carmen, sus nietos Ana y Luis"
-          />
-
-          {error && (
-            <div className="rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
-              {error}
-            </div>
-          )}
-
-          <Button
-            type="button"
-            onClick={handleUpload}
-            disabled={uploading}
-            className="w-full"
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Subiendo...
-              </>
-            ) : (
-              "Subir foto"
-            )}
-          </Button>
-        </div>
+        </Button>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -174,39 +177,38 @@ function Lightbox({
   onClose: () => void;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
+    <Modal
+      onClose={onClose}
+      backdrop="dark"
+      labelledBy="lightbox-caption"
+      contentClassName="w-full max-w-lg rounded-2xl bg-surface p-4 shadow-soft"
     >
-      <div
-        className="w-full max-w-lg rounded-2xl bg-surface p-4 shadow-soft"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="text-text-muted"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        {photo.signed_url && (
-          <img
-            src={photo.signed_url}
-            alt={photo.caption}
-            className="max-h-[60vh] w-full rounded-xl object-contain"
-          />
-        )}
-        <p className="mt-4 text-base text-text-primary">{photo.caption}</p>
-        {photo.people_in_photo && (
-          <p className="mt-1 text-sm text-text-secondary">
-            {photo.people_in_photo}
-          </p>
-        )}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="-m-3 rounded-lg p-3 text-text-muted transition-colors hover:bg-surface-alt hover:text-text-primary"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
-    </div>
+      {photo.signed_url && (
+        <img
+          src={photo.signed_url}
+          alt={photo.caption}
+          className="max-h-[60vh] w-full rounded-xl object-contain"
+        />
+      )}
+      <p id="lightbox-caption" className="mt-4 text-base text-text-primary">
+        {photo.caption}
+      </p>
+      {photo.people_in_photo && (
+        <p className="mt-1 text-sm text-text-secondary">
+          {photo.people_in_photo}
+        </p>
+      )}
+    </Modal>
   );
 }
 
@@ -309,7 +311,7 @@ export default function Memories({
                   }}
                   disabled={deletingId === photo.id}
                   aria-label="Eliminar foto"
-                  className="absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  className="absolute right-1.5 top-1.5 rounded-full bg-black/50 p-3.5 text-white opacity-70 transition-opacity duration-200 hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
                 >
                   {deletingId === photo.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

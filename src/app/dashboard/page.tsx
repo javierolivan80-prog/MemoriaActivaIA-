@@ -6,6 +6,7 @@ import LogoutButton from "@/components/auth/LogoutButton";
 import AlertsPanel, { type AlertItem } from "@/components/dashboard/AlertsPanel";
 import ManageSubscriptionButton from "@/components/dashboard/ManageSubscriptionButton";
 import Card from "@/components/ui/Card";
+import Reveal from "@/components/ui/Reveal";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 import { PLANS } from "@/lib/stripe/plans";
 import type { ElderlyProfile, Subscription } from "@/types";
@@ -96,12 +97,12 @@ export default async function DashboardPage({
         </div>
 
         {created === "success" && (
-          <div className="mt-8 flex items-center gap-3 rounded-2xl bg-secondary-light px-5 py-4">
-            <CheckCircle className="h-5 w-5 shrink-0 text-secondary" />
+          <Reveal className="mt-8 flex items-center gap-3 rounded-2xl bg-secondary-light px-5 py-4">
+            <CheckCircle className="animate-pop-in h-5 w-5 shrink-0 text-secondary" />
             <p className="text-base text-text-primary">
               Perfil creado. Empezaremos a llamar según el horario elegido.
             </p>
-          </div>
+          </Reveal>
         )}
 
         <div className="mt-12">
@@ -124,26 +125,28 @@ export default async function DashboardPage({
           </div>
 
           {!hasProfiles && (
-            <Card className="mt-6 text-center">
-              <UserPlus
-                className="mx-auto h-12 w-12 text-primary"
-                strokeWidth={1.5}
-              />
-              <p className="mt-4 text-lg text-text-secondary">
-                Aún no has añadido a nadie
-              </p>
-              <Link
-                href="/profile/new"
-                className={`${buttonBaseClasses} ${buttonVariantClasses.primary} mt-6 px-8 py-4 text-lg`}
-              >
-                Añadir mi primer familiar
-              </Link>
-            </Card>
+            <Reveal delay={80}>
+              <Card className="mt-6 text-center">
+                <UserPlus
+                  className="mx-auto h-12 w-12 text-primary"
+                  strokeWidth={1.5}
+                />
+                <p className="mt-4 text-lg text-text-secondary">
+                  Aún no has añadido a nadie
+                </p>
+                <Link
+                  href="/profile/new"
+                  className={`${buttonBaseClasses} ${buttonVariantClasses.primary} mt-6 px-8 py-4 text-lg`}
+                >
+                  Añadir mi primer familiar
+                </Link>
+              </Card>
+            </Reveal>
           )}
 
           {hasProfiles && (
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              {profiles!.map((profile) => {
+              {profiles!.map((profile, index) => {
                 const subscription = latestSubscriptionByElderly.get(
                   profile.id
                 );
@@ -152,72 +155,77 @@ export default async function DashboardPage({
                   : false;
 
                 return (
-                  <Card key={profile.id}>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xl font-semibold text-text-primary">
-                          {profile.name}
-                        </p>
-                        <p className="text-base text-text-secondary">
-                          {profile.age
-                            ? `${profile.age} años`
-                            : "Edad sin especificar"}
-                        </p>
-                      </div>
-                      <span
-                        className={`rounded-full px-3 py-1 text-sm font-medium ${
-                          profile.active
-                            ? "bg-secondary-light text-secondary"
-                            : "bg-surface-alt text-text-muted"
-                        }`}
-                      >
-                        {profile.active ? "Activo" : "Inactivo"}
-                      </span>
-                    </div>
-
-                    <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
-                      {subscription ? (
-                        <div className="flex items-center gap-2">
-                          <PhoneCall
-                            className="h-4 w-4 text-primary"
-                            strokeWidth={1.75}
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-text-primary">
-                              Plan {PLANS[subscription.plan_type].name}
-                            </p>
-                            <p
-                              className={`text-sm ${
-                                isActivePlan
-                                  ? "text-text-muted"
-                                  : "text-alert-warning"
-                              }`}
-                            >
-                              {STATUS_LABELS[subscription.status] ??
-                                subscription.status}
-                            </p>
-                          </div>
+                  <Reveal key={profile.id} delay={index * 80}>
+                    <Card className="transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-soft-md">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xl font-semibold text-text-primary">
+                            {profile.name}
+                          </p>
+                          <p className="text-base text-text-secondary">
+                            {profile.age
+                              ? `${profile.age} años`
+                              : "Edad sin especificar"}
+                          </p>
                         </div>
-                      ) : (
-                        <Link
-                          href={`/pricing?elderlyId=${profile.id}`}
-                          className="text-base font-medium text-primary"
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
+                            profile.active
+                              ? "bg-secondary-light text-text-primary"
+                              : "bg-surface-alt text-text-muted"
+                          }`}
                         >
-                          Elegir plan
-                        </Link>
-                      )}
-
-                      <div className="flex items-center gap-2">
-                        {subscription && <ManageSubscriptionButton />}
-                        <Link
-                          href={`/elderly/${profile.id}`}
-                          className={`${buttonBaseClasses} ${buttonVariantClasses.ghost} px-3 py-2 text-sm`}
-                        >
-                          Ver detalles
-                        </Link>
+                          {profile.active && (
+                            <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />
+                          )}
+                          {profile.active ? "Activo" : "Inactivo"}
+                        </span>
                       </div>
-                    </div>
-                  </Card>
+
+                      <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
+                        {subscription ? (
+                          <div className="flex items-center gap-2">
+                            <PhoneCall
+                              className="h-4 w-4 text-primary"
+                              strokeWidth={1.75}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-text-primary">
+                                Plan {PLANS[subscription.plan_type].name}
+                              </p>
+                              <p
+                                className={`text-sm ${
+                                  isActivePlan
+                                    ? "text-text-muted"
+                                    : "text-alert-warning"
+                                }`}
+                              >
+                                {STATUS_LABELS[subscription.status] ??
+                                  subscription.status}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <Link
+                            href={`/pricing?elderlyId=${profile.id}`}
+                            className="text-base font-medium text-primary transition-colors hover:text-primary-hover"
+                          >
+                            Elegir plan
+                          </Link>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          {subscription && <ManageSubscriptionButton />}
+                          <Link
+                            href={`/elderly/${profile.id}`}
+                            className={`${buttonBaseClasses} ${buttonVariantClasses.ghost} px-3 py-2 text-sm`}
+                          >
+                            Ver detalles
+                          </Link>
+                        </div>
+                      </div>
+                    </Card>
+                  </Reveal>
                 );
               })}
             </div>

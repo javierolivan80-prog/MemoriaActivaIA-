@@ -1,0 +1,24 @@
+{
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "animate-bounce",
+        "createdAt": "2026-08-29T08:55:37.034Z",
+        "reason": "Pre-existing typing-indicator dots (Chat.tsx TypingIndicator), not introduced by this polish pass; bounce is the established convention for chat 'typing...' indicators (iMessage/Slack/WhatsApp), a domain-appropriate motion rather than decorative bounce/elastic easing."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/components/dashboard/AlertsPanel.tsx"
+        ],
+        "createdAt": "2026-08-29T08:55:42.167Z",
+        "reason": "Alerts left-border accent is DESIGN.md's documented signature Alerts component (Components section) — the one place the palette intentionally breaks the calm/no-side-border rule to signal severity. Pre-existing pattern, not introduced by this polish pass."
+      }
+    ]
+  }
+}

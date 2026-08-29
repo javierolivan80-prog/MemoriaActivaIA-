@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
 import type { ElderlyAccessRole, ElderlyAccessStatus } from "@/types";
 
 interface AccessRow {
@@ -61,48 +62,47 @@ function InviteModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-soft">
-        <h2 className="text-lg font-semibold text-text-primary">
-          Invitar a alguien
-        </h2>
-        <div className="mt-4">
-          <Input
-            label="Email"
-            name="invite-email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="familiar@email.com"
-          />
-        </div>
-        {error && (
-          <div className="mt-3 rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
-            {error}
-          </div>
-        )}
-        <div className="mt-5 flex gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={sending}
-            className="flex-1"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              "Enviar invitación"
-            )}
-          </Button>
-        </div>
+    <Modal onClose={onClose} labelledBy="invite-modal-title">
+      <h2 id="invite-modal-title" className="text-lg font-semibold text-text-primary">
+        Invitar a alguien
+      </h2>
+      <div className="mt-4">
+        <Input
+          label="Email"
+          name="invite-email"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="familiar@email.com"
+          autoFocus
+        />
       </div>
-    </div>
+      {error && (
+        <div className="mt-3 rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
+          {error}
+        </div>
+      )}
+      <div className="mt-5 flex gap-3">
+        <Button type="button" variant="ghost" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          disabled={sending}
+          className="flex-1"
+        >
+          {sending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            "Enviar invitación"
+          )}
+        </Button>
+      </div>
+    </Modal>
   );
 }
 
@@ -178,7 +178,7 @@ export default function AccessPanel({ elderlyId }: { elderlyId: string }) {
                   className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                     row.role === "owner"
                       ? "bg-primary-light text-primary"
-                      : "bg-secondary-light text-secondary"
+                      : "bg-secondary-light text-text-primary"
                   }`}
                 >
                   {row.role === "owner" ? "Propietario" : "Colaborador"}
@@ -223,7 +223,7 @@ export default function AccessPanel({ elderlyId }: { elderlyId: string }) {
                     type="button"
                     onClick={() => setConfirmingId(row.id)}
                     aria-label="Eliminar acceso"
-                    className="text-text-muted hover:text-alert-urgent"
+                    className="-m-3.5 rounded-lg p-3.5 text-text-muted transition-colors hover:bg-surface-alt hover:text-alert-urgent"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

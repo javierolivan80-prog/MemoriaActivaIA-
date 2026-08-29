@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, PhoneCall, X } from "lucide-react";
+import Modal from "@/components/ui/Modal";
 import type { CalendarDay, CalendarSession } from "@/app/api/elderly/[id]/calendar/route";
 
 const MONTH_NAMES = [
@@ -11,14 +12,14 @@ const MONTH_NAMES = [
 
 const WEEKDAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
-const MOOD_META: Record<string, { dot: string; label: string; emoji: string }> = {
-  positivo: { dot: "bg-secondary", label: "Buen ánimo", emoji: "😊" },
-  neutral: { dot: "bg-alert-warning", label: "Ánimo neutral", emoji: "😐" },
-  negativo: { dot: "bg-alert-warning", label: "Algo bajo de ánimo", emoji: "😕" },
-  preocupante: { dot: "bg-alert-urgent", label: "Preocupado/a", emoji: "😟" },
+const MOOD_META: Record<string, { dot: string; label: string }> = {
+  positivo: { dot: "bg-secondary", label: "Buen ánimo" },
+  neutral: { dot: "bg-alert-warning", label: "Ánimo neutral" },
+  negativo: { dot: "bg-alert-warning", label: "Algo bajo de ánimo" },
+  preocupante: { dot: "bg-alert-urgent", label: "Preocupado/a" },
 };
 
-const DEFAULT_MOOD_META = { dot: "bg-text-muted", label: "Sin analizar", emoji: "—" };
+const DEFAULT_MOOD_META = { dot: "bg-text-muted", label: "Sin analizar" };
 
 function dotColorForDay(day: CalendarDay): string {
   if ((day.maxAlertLevel ?? 0) >= 2) return "bg-alert-urgent";
@@ -87,89 +88,86 @@ function DayDetailModal({
   onClose: () => void;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
+    <Modal
+      onClose={onClose}
+      labelledBy="day-detail-modal-title"
+      contentClassName="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-soft"
     >
-      <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-soft"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-semibold capitalize text-text-primary">
-              {formatFullDate(day.date)}
-            </h2>
-            <p className="text-sm text-text-secondary">
-              Cómo estuvo {elderlyName} este día
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="text-text-muted"
-          >
-            <X className="h-5 w-5" />
-          </button>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 id="day-detail-modal-title" className="text-lg font-semibold capitalize text-text-primary">
+            {formatFullDate(day.date)}
+          </h2>
+          <p className="text-sm text-text-secondary">
+            Cómo estuvo {elderlyName} este día
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="-m-3 rounded-lg p-3 text-text-muted transition-colors hover:bg-surface-alt hover:text-text-primary"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-        {(day.maxAlertLevel ?? 0) > 0 && (
-          <div className="mt-4 rounded-xl bg-alert-urgent-bg p-4 text-sm text-alert-urgent">
-            Se generó una alerta ese día (nivel {day.maxAlertLevel}).
-          </div>
-        )}
+      {(day.maxAlertLevel ?? 0) > 0 && (
+        <div className="mt-4 rounded-xl bg-alert-urgent-bg p-4 text-sm text-alert-urgent">
+          Se generó una alerta ese día (nivel {day.maxAlertLevel}).
+        </div>
+      )}
 
-        <div className="mt-4 space-y-4">
-          {day.sessions.map((session: CalendarSession) => {
-            const mood = session.mood ? MOOD_META[session.mood] ?? DEFAULT_MOOD_META : DEFAULT_MOOD_META;
-            const duration = formatDuration(session.duration_seconds);
-            return (
-              <div
-                key={session.id}
-                className="rounded-2xl border border-border bg-surface p-5"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-text-primary">
-                    {formatTime(session.started_at)}
+      <div className="mt-4 space-y-4">
+        {day.sessions.map((session: CalendarSession) => {
+          const mood = session.mood ? MOOD_META[session.mood] ?? DEFAULT_MOOD_META : DEFAULT_MOOD_META;
+          const duration = formatDuration(session.duration_seconds);
+          return (
+            <div
+              key={session.id}
+              className="rounded-2xl border border-border bg-surface p-5"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm font-medium text-text-primary">
+                  {formatTime(session.started_at)}
+                </span>
+                {duration && (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-text-muted">
+                    <Clock className="h-3.5 w-3.5" />
+                    {duration}
                   </span>
-                  {duration && (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-text-muted">
-                      <Clock className="h-3.5 w-3.5" />
-                      {duration}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-2 text-sm text-text-secondary">
-                  <span aria-hidden>{mood.emoji}</span> {mood.label}
-                </p>
-                {session.summary ? (
-                  <p className="mt-3 text-base leading-relaxed text-text-primary">
-                    {session.summary}
-                  </p>
-                ) : (
-                  <p className="mt-3 text-base text-text-muted">
-                    Aún no hay resumen disponible para esta llamada.
-                  </p>
-                )}
-                {session.topics_discussed.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {session.topics_discussed.map((topic) => (
-                      <span
-                        key={topic}
-                        className="rounded-full bg-secondary-light px-2.5 py-0.5 text-xs text-secondary"
-                      >
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
                 )}
               </div>
-            );
-          })}
-        </div>
+              <p className="mt-2 flex items-center gap-1.5 text-sm text-text-secondary">
+                <span className={`h-2 w-2 rounded-full ${mood.dot}`} aria-hidden />
+                {mood.label}
+              </p>
+              {session.summary ? (
+                <p className="mt-3 text-base leading-relaxed text-text-primary">
+                  {session.summary}
+                </p>
+              ) : (
+                <p className="mt-3 text-base text-text-muted">
+                  Aún no hay resumen disponible para esta llamada.
+                </p>
+              )}
+              {session.topics_discussed.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {session.topics_discussed.map((topic) => (
+                    <span
+                      key={topic}
+                      className="rounded-full bg-secondary-light px-2.5 py-0.5 text-xs text-secondary"
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -252,7 +250,7 @@ export default function CallCalendar({
           type="button"
           onClick={goToPreviousMonth}
           aria-label="Mes anterior"
-          className="rounded-lg p-2 text-text-secondary hover:bg-surface-alt"
+          className="rounded-lg p-3 text-text-secondary hover:bg-surface-alt"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -263,7 +261,7 @@ export default function CallCalendar({
           type="button"
           onClick={goToNextMonth}
           aria-label="Mes siguiente"
-          className="rounded-lg p-2 text-text-secondary hover:bg-surface-alt"
+          className="rounded-lg p-3 text-text-secondary hover:bg-surface-alt"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -311,9 +309,18 @@ export default function CallCalendar({
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-text-secondary">
-        <span>🟢 Buen ánimo</span>
-        <span>🟡 Ánimo neutral</span>
-        <span>🔴 Requiere atención</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-secondary" aria-hidden />
+          Buen ánimo
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-alert-warning" aria-hidden />
+          Ánimo neutral
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-alert-urgent" aria-hidden />
+          Requiere atención
+        </span>
       </div>
 
       {!loading && Object.keys(days).length === 0 && (

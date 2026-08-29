@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Loader2, Pencil, Send, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
 import type { FamilyChatMessage, FamilyChatThread } from "@/types";
 
 const SUGGESTIONS = [
@@ -60,46 +61,46 @@ function NewThreadModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-soft">
-        <h2 className="text-lg font-semibold text-text-primary">Nuevo chat</h2>
-        <div className="mt-4">
-          <Input
-            label="¿Sobre qué queréis hablar?"
-            name="thread-title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Ej: Dudas de salud"
-            autoFocus
-          />
-        </div>
-        {error && (
-          <div className="mt-3 rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
-            {error}
-          </div>
-        )}
-        <div className="mt-5 flex gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            onClick={handleCreate}
-            disabled={creating}
-            className="flex-1"
-          >
-            {creating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Creando...
-              </>
-            ) : (
-              "Crear chat"
-            )}
-          </Button>
-        </div>
+    <Modal onClose={onClose} labelledBy="new-thread-modal-title">
+      <h2 id="new-thread-modal-title" className="text-lg font-semibold text-text-primary">
+        Nuevo chat
+      </h2>
+      <div className="mt-4">
+        <Input
+          label="¿Sobre qué queréis hablar?"
+          name="thread-title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Ej: Dudas de salud"
+          autoFocus
+        />
       </div>
-    </div>
+      {error && (
+        <div className="mt-3 rounded-xl bg-alert-urgent-bg p-3 text-sm text-alert-urgent">
+          {error}
+        </div>
+      )}
+      <div className="mt-5 flex gap-3">
+        <Button type="button" variant="ghost" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          onClick={handleCreate}
+          disabled={creating}
+          className="flex-1"
+        >
+          {creating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Creando...
+            </>
+          ) : (
+            "Crear chat"
+          )}
+        </Button>
+      </div>
+    </Modal>
   );
 }
 
@@ -139,12 +140,13 @@ function ThreadList({
           </p>
         )}
 
-        {threads.map((thread) => (
+        {threads.map((thread, index) => (
           <button
             key={thread.id}
             type="button"
             onClick={() => onSelect(thread.id)}
-            className={`w-full rounded-xl px-3 py-2.5 text-left transition-colors duration-150 ${
+            style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
+            className={`step-fade w-full rounded-xl px-3 py-2.5 text-left transition-[background-color,transform] duration-150 hover:-translate-y-0.5 ${
               thread.id === activeThreadId
                 ? "bg-primary-light"
                 : "hover:bg-surface-alt"
@@ -298,14 +300,14 @@ function ThreadConversation({
   }
 
   return (
-    <div className="flex h-[65vh] flex-col">
+    <div className="step-fade flex h-[65vh] flex-col">
       <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
         <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
             onClick={onBack}
             aria-label="Ver chats"
-            className="shrink-0 rounded-lg p-1 text-text-secondary hover:bg-surface-alt md:hidden"
+            className="-m-2 shrink-0 rounded-lg p-3 text-text-secondary hover:bg-surface-alt md:hidden"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -331,7 +333,7 @@ function ThreadConversation({
               type="button"
               onClick={() => setRenaming(true)}
               aria-label="Renombrar chat"
-              className="rounded-lg p-1.5 text-text-muted hover:bg-surface-alt hover:text-text-primary"
+              className="-m-2 rounded-lg p-3.5 text-text-muted transition-[transform,background-color,color] duration-200 hover:-translate-y-0.5 hover:scale-110 hover:bg-surface-alt hover:text-text-primary"
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -357,7 +359,7 @@ function ThreadConversation({
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
                 aria-label="Eliminar chat"
-                className="rounded-lg p-1.5 text-text-muted hover:bg-surface-alt hover:text-alert-urgent"
+                className="-m-2 rounded-lg p-3.5 text-text-muted transition-[transform,background-color,color] duration-200 hover:-translate-y-0.5 hover:scale-110 hover:bg-surface-alt hover:text-alert-urgent"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -371,15 +373,22 @@ function ThreadConversation({
           <Loader2 className="h-6 w-6 animate-spin text-text-muted" />
         </div>
       ) : (
-        <div className="flex-1 space-y-3 overflow-y-auto px-1 py-3">
+        <div
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="Mensajes de la conversación"
+          className="flex-1 space-y-3 overflow-y-auto px-1 py-3"
+        >
           {messages.length === 0 && (
             <div className="flex flex-wrap gap-2">
-              {SUGGESTIONS.map((suggestion) => (
+              {SUGGESTIONS.map((suggestion, index) => (
                 <button
                   key={suggestion}
                   type="button"
                   onClick={() => handleSend(suggestion)}
-                  className="rounded-full border border-primary bg-primary-light px-4 py-2 text-sm font-medium text-primary"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  className="step-fade rounded-full border border-primary bg-primary-light px-4 py-2 text-sm font-medium text-primary transition-transform duration-150 hover:-translate-y-0.5"
                 >
                   {suggestion}
                 </button>
@@ -387,10 +396,11 @@ function ThreadConversation({
             </div>
           )}
 
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
               key={message.id}
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
+              className={`animate-message-in flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-base leading-relaxed ${
@@ -435,7 +445,7 @@ function ThreadConversation({
           onClick={() => handleSend(input)}
           disabled={sending || !input.trim()}
           aria-label="Enviar mensaje"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white disabled:opacity-50"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-[background-color,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:pointer-events-none disabled:translate-y-0 disabled:bg-surface-alt disabled:text-text-muted"
         >
           <Send className="h-5 w-5" />
         </button>

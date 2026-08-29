@@ -51,8 +51,8 @@ export default function ElderlyDetailClient({
         </Link>
 
         <div className="mt-6 flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary-light text-xl font-semibold text-primary">
+          <div className="step-fade flex items-center gap-4">
+            <div className="animate-pop-in flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary-light text-xl font-semibold text-primary">
               {initials(profile.name)}
             </div>
             <div>
@@ -61,12 +61,15 @@ export default function ElderlyDetailClient({
                   {profile.name}
                 </h1>
                 <span
-                  className={`rounded-full px-3 py-1 text-sm font-medium ${
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
                     profile.active
-                      ? "bg-secondary-light text-secondary"
+                      ? "bg-secondary-light text-text-primary"
                       : "bg-surface-alt text-text-muted"
                   }`}
                 >
+                  {profile.active && (
+                    <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />
+                  )}
                   {profile.active ? "Activo" : "Inactivo"}
                 </span>
               </div>
@@ -90,7 +93,13 @@ export default function ElderlyDetailClient({
           <Tabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
         </div>
 
-        <div className="mt-8">
+        <div
+          key={activeTab}
+          className="step-fade mt-8"
+          role="tabpanel"
+          id={`panel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+        >
           {activeTab === "historial" && <Timeline elderlyId={profile.id} />}
           {activeTab === "calendario" && (
             <CallCalendar elderlyId={profile.id} elderlyName={profile.name} />

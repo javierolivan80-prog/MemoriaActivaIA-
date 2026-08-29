@@ -13,11 +13,15 @@ export default function Tabs({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-6 overflow-x-auto border-b border-border">
+    <div role="tablist" className="flex gap-6 overflow-x-auto border-b border-border">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
+          role="tab"
+          id={`tab-${tab.id}`}
+          aria-selected={activeId === tab.id}
+          aria-controls={`panel-${tab.id}`}
           onClick={() => onChange(tab.id)}
           className={`-mb-px shrink-0 border-b-2 px-1 pb-3 text-base font-medium transition-colors duration-200 ${
             activeId === tab.id
