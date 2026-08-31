@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
 import { inputClasses } from "@/components/ui/Input";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
@@ -12,14 +13,18 @@ import type { ElderlyProfile, PlanType } from "@/types";
 export default function PricingCards({
   profiles,
   initialElderlyId,
+  isAuthenticated,
 }: {
   profiles: ElderlyProfile[];
   initialElderlyId: string | null;
+  // Visitors without a session see the same cards, but choosing a plan sends
+  // them to signup instead of Stripe. `profiles` is empty in that case.
+  isAuthenticated: boolean;
 }) {
   const [elderlyId, setElderlyId] = useState(
     initialElderlyId && profiles.some((p) => p.id === initialElderlyId)
       ? initialElderlyId
-      : profiles[0].id
+      : (profiles[0]?.id ?? "")
   );
   const [loadingPlan, setLoadingPlan] = useState<PlanType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +65,8 @@ export default function PricingCards({
           </h1>
           <p className="mt-4 max-w-sm text-lg text-text-secondary">
             Cambia o cancela cuando quieras, sin permanencia. Los dos planes
-            incluyen resumen y alertas después de cada llamada — la
-            diferencia está en cuántas veces al día llamamos.
+            incluyen resumen y alertas después de cada llamada. La diferencia
+            está en cuántas veces al día llamamos.
           </p>
 
           {profiles.length > 1 && (
@@ -96,6 +101,11 @@ export default function PricingCards({
           {PLAN_ORDER.map((planType, index) => {
             const plan = PLANS[planType];
             const isPopular = planType === "completo";
+            const ctaClasses = `${buttonBaseClasses} ${
+              isPopular
+                ? buttonVariantClasses.primary
+                : buttonVariantClasses.secondary
+            } mt-8 w-full`;
 
             return (
               <Reveal
@@ -142,24 +152,26 @@ export default function PricingCards({
                     ))}
                   </ul>
 
-                  <button
-                    onClick={() => handleChoosePlan(planType)}
-                    disabled={loadingPlan !== null}
-                    className={`${buttonBaseClasses} ${
-                      isPopular
-                        ? buttonVariantClasses.primary
-                        : buttonVariantClasses.secondary
-                    } mt-8 w-full`}
-                  >
-                    {loadingPlan === planType ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Redirigiendo...
-                      </>
-                    ) : (
-                      `Elegir ${plan.name}`
-                    )}
-                  </button>
+                  {isAuthenticated ? (
+                    <button
+                      onClick={() => handleChoosePlan(planType)}
+                      disabled={loadingPlan !== null}
+                      className={ctaClasses}
+                    >
+                      {loadingPlan === planType ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Redirigiendo...
+                        </>
+                      ) : (
+                        `Elegir ${plan.name}`
+                      )}
+                    </button>
+                  ) : (
+                    <Link href="/auth/signup" className={ctaClasses}>
+                      {`Elegir ${plan.name}`}
+                    </Link>
+                  )}
                 </div>
               </Reveal>
             );

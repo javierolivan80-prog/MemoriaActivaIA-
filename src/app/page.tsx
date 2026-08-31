@@ -12,13 +12,13 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "Nosotros nos encargamos",
+    title: "Le llamamos cada día",
     description:
-      "Le llamamos cada día a la hora que elijas, con una voz cálida y natural.",
+      "A la hora que elijas, con una voz cálida y natural.",
   },
   {
     number: "03",
-    title: "Tú te quedas tranquilo",
+    title: "Tú te enteras de todo",
     description:
       "Recibe un resumen después de cada llamada y alertas si algo importa.",
   },
@@ -39,9 +39,9 @@ const BENEFITS = [
   },
   {
     icon: ShieldCheck,
-    title: "Privacidad respetada",
+    title: "Nunca compartimos la conversación entera",
     description:
-      "Nunca compartimos la conversación completa, solo lo importante para la familia.",
+      "La familia recibe solo lo importante. El resto se queda entre él o ella y quien le llama.",
   },
 ];
 
@@ -136,7 +136,7 @@ export default function Home() {
       <section className="bg-surface-alt py-20 md:py-28">
         <div className="mx-auto max-w-3xl px-6">
           <h2 className="text-center font-serif text-3xl text-text-primary">
-            Así de simple
+            Cómo funciona
           </h2>
           <div className="mt-16 space-y-16 md:space-y-24">
             {STEPS.map((step) => (
@@ -171,8 +171,8 @@ export default function Home() {
               Por qué Memoria Activa
             </h2>
             <p className="mt-4 max-w-sm text-text-secondary">
-              Pensado para dar tranquilidad a la familia, sin invadir nunca la
-              intimidad de quien más quieres.
+              Pensado para dar tranquilidad a la familia, sin invadir nunca su
+              intimidad.
             </p>
           </div>
 
@@ -201,7 +201,7 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-border py-8 text-center text-sm text-text-muted">
-        © 2026 Memoria Activa. Hecho con cariño para las familias.
+        © 2026 Memoria Activa
       </footer>
     </div>
   );

@@ -72,6 +72,8 @@ export async function POST(request: Request) {
       system:
         `Analizas la transcripción de una llamada telefónica de compañía hecha a ${profile.name}, una persona mayor, en español. ` +
         "Genera un resumen breve, la lista de cosas importantes mencionadas (salud, estado de ánimo, sucesos, nombres), el estado de ánimo detectado y los temas tratados. " +
+        "El resumen lo lee la familia cada día: escríbelo como se lo contarías a un hermano, en dos o tres frases, con los detalles concretos que ella ha contado. " +
+        "Nada de lenguaje clínico ni de informe, nunca uses expresiones como 'el usuario', 'se observa' o 'según la transcripción', y no inventes nada que no esté en la llamada. " +
         "Evalúa también si hay que alertar a la familia con un alert_level: " +
         "0 = todo normal, sin necesidad de alerta; " +
         "1 = leve (bajo de ánimo, alguna queja menor, algo de soledad); " +

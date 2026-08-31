@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import Header from "@/components/landing/Header";
 import PricingCards from "@/components/pricing/PricingCards";
 import Reveal from "@/components/ui/Reveal";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
@@ -18,8 +18,22 @@ export default async function PricingPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Visitors see the plans without an account: the landing page links here, and
+  // a family should be able to check the price before signing up. Choosing a
+  // plan sends them to signup, and they pick a familiar once they're back.
   if (!user) {
-    redirect("/auth/login");
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-20">
+          <PricingCards
+            profiles={[]}
+            initialElderlyId={null}
+            isAuthenticated={false}
+          />
+        </div>
+      </div>
+    );
   }
 
   const { data: profiles } = await supabase
@@ -58,6 +72,7 @@ export default async function PricingPage({
           <PricingCards
             profiles={profiles}
             initialElderlyId={elderlyId ?? null}
+            isAuthenticated
           />
         )}
       </div>
