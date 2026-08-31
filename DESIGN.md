@@ -138,6 +138,32 @@ Provenance: every value below was either given directly in the rebrand brief or 
 **The Severity-Only Rule.** Rust, Ochre, and Slate exist only inside the alert system. None of them may appear as a decorative accent, a chart color, or a brand touch anywhere else — Slate in particular must never be reached for as "a calmer blue," because that's exactly the confusion the separate hue family exists to prevent.
 **The Teal-Is-Not-Text Rule.** Default to `text-secondary` only on icons and decorative marks. Any place teal carries readable text — however small — uses `text-secondary-text`, never the raw accent.
 
+### Dark Mode
+
+Follows `prefers-color-scheme`; there is no in-app toggle yet. Every color token is a CSS custom property declared in a plain (non-`inline`) `@theme` block specifically so a `@media (prefers-color-scheme: dark) { :root { ... } }` override re-themes every Tailwind utility that reads it — no per-component `dark:` classes needed, except the handful of places a literal `text-white` sat on a token background that flips lightness (those use `dark:text-background` instead). **If you ever see a color read back as its light-mode value while `prefers-color-scheme: dark` is active, suspect `@theme inline` on that block before anything else** — `inline` bakes the literal hex into each generated utility at build time instead of emitting `var(--color-*)`, which silently breaks the override with no error. This cost real debugging time once already.
+
+| Token | Light | Dark |
+|---|---|---|
+| background | #f7f8f6 | #0a1520 |
+| surface | #ffffff | #10202c |
+| surface-alt | #eaeeee | #162a38 |
+| primary | #073d5d | #4a90b8 |
+| primary-hover | #062f4b | #5aa3ca |
+| primary-light | #e1e8ec | #203f53 |
+| secondary | #639293 | #639293 (unchanged — already clears 4.5:1 on the dark background) |
+| secondary-light | #e0e9e9 | #29424b |
+| text-primary | #062f4b | #eef3f5 |
+| text-secondary | #345369 | #bdcad1 |
+| text-muted | #5c7383 | #abbbc4 |
+| border | #d1dade | #334756 |
+| alert-urgent / -bg | #b3432f / #f7ecea | #cb7f72 / #2a262c |
+| alert-warning / -bg | #8a5819 / #f1ebe3 | #af8d63 / #242929 |
+| alert-info / -bg | #4f6b85 / #edf0f3 | #879aac / #1a2c3a |
+
+**Why the dark background isn't close to the logo's own darkest tone.** The mark's deepest pixels sit around #04395c — a dark background chosen near that value would let the unaltered logo camouflage into it. #0a1520 sits low enough that the mark still reads as a distinct (if subtle) shape, and the teal wave running through it stays bright at 7.5–8.4:1 either way. This is what the Canonical-Asset Rule's "tune the surface, not the logo" instruction means in practice — verify it by compositing the real asset over any new dark surface candidate before shipping one.
+
+**Why `primary` needed a real lighten, not just a tint.** Light mode's Deep Blue (#073d5d) is already near the bottom of the luminance range — used as-is on a dark background it would barely register, and white button text on top of it only clears 3.5:1 (fails AA). Dark-mode primary lightens to #4a90b8 and filled buttons swap to dark text (`dark:text-background`) instead of white, which is why that pairing shows up as a named exception above rather than a plain value swap.
+
 ## Typography
 
 **Typeface:** Figtree (with system-ui, sans-serif fallback) — one humanist sans across the entire scale, replacing the earlier Fraunces-display/Inter-body pairing. The rebrand brief asked for legibility over trend for a mixed-age audience and a single coherent scale rather than a serif "feeling" register; Figtree is warm and rounded without being a novelty face, and it's deliberately not Inter, Roboto, Poppins, or Montserrat — genuinely distinct from the default AI-product look, not just re-themed.
