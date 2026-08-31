@@ -52,17 +52,8 @@ export default function Home() {
     <div className="flex flex-1 flex-col bg-background">
       <Header />
 
-      <section className="relative overflow-hidden px-6 pb-20 pt-16 md:pb-28 md:pt-20">
-        <div
-          aria-hidden
-          className="animate-drift-slow pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-secondary-light/60 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-primary-light/50 blur-3xl"
-        />
-
-        <div className="relative mx-auto grid max-w-6xl items-center gap-16 md:grid-cols-[1.05fr_0.95fr] md:gap-12">
+      <section className="px-6 pb-20 pt-16 md:pb-28 md:pt-20">
+        <div className="mx-auto grid max-w-6xl items-center gap-16 md:grid-cols-[1.05fr_0.95fr] md:gap-12">
           <div className="text-center md:text-left">
             <h1 className="mx-auto max-w-xl text-5xl font-semibold leading-[1.08] tracking-tight text-text-primary md:mx-0 md:text-[3.75rem]">
               Compañía real para quien más quieres

@@ -11,27 +11,30 @@ function getResendClient(): Resend | null {
 }
 
 const COLORS = {
-  background: "#fdf8f3",
+  background: "#f7f8f6",
   surface: "#ffffff",
-  border: "#e8dfd5",
-  primary: "#8f5238",
-  textPrimary: "#2d2a26",
-  textSecondary: "#6b6560",
-  textMuted: "#6f665e",
+  border: "#d1dade",
+  primary: "#073d5d",
+  textPrimary: "#062f4b",
+  textSecondary: "#345369",
+  textMuted: "#5c7383",
 };
 
 function emailShell(bodyHtml: string): string {
+  const logoUrl = process.env.NEXT_PUBLIC_APP_URL
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/brand/icon-transparent.png`
+    : null;
+
   return `
     <div style="background-color: ${COLORS.background}; padding: 40px 16px; font-family: -apple-system, 'Segoe UI', sans-serif;">
       <div style="max-width: 480px; margin: 0 auto; background-color: ${COLORS.surface}; border: 1px solid ${COLORS.border}; border-radius: 16px; padding: 32px;">
-        <p style="margin: 0 0 24px; font-family: Georgia, serif; font-size: 22px; color: ${COLORS.textPrimary};">
-          Memoria Activa
-        </p>
+        ${
+          logoUrl
+            ? `<img src="${logoUrl}" alt="Memoria Activa" width="40" height="24" style="display: block; margin: 0 0 20px; height: 24px; width: auto;" />`
+            : `<p style="margin: 0 0 24px; font-size: 24px; font-weight: 600; color: ${COLORS.textPrimary};">Memoria Activa</p>`
+        }
         ${bodyHtml}
       </div>
-      <p style="max-width: 480px; margin: 20px auto 0; text-align: center; font-size: 12px; color: ${COLORS.textMuted};">
-        Hecho con cariño para las familias.
-      </p>
     </div>
   `;
 }
@@ -94,8 +97,8 @@ export async function sendAlertEmail({
   const client = getResendClient();
   if (!client) return;
 
-  const levelBg = alertLevel === 3 ? "#fbeae7" : "#fbf1e3";
-  const levelColor = alertLevel === 3 ? "#c24b3f" : "#c98a3a";
+  const levelBg = alertLevel === 3 ? "#f7ecea" : "#f1ebe3";
+  const levelColor = alertLevel === 3 ? "#b3432f" : "#8a5819";
 
   const { error } = await client.emails.send({
     from: "Memoria Activa <onboarding@resend.dev>",

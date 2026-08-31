@@ -90,6 +90,15 @@
         ],
         "createdAt": "2026-08-29T12:23:27.643Z",
         "reason": "reuses DESIGN.md's documented Alerts signature component pattern (severity-tinted border-l-4), not generic slop — same treatment already used by AlertsPanel.tsx"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#d1dade",
+        "files": [
+          "src/lib/email/resend.ts"
+        ],
+        "createdAt": "2026-08-31T11:12:43.839Z",
+        "reason": "Inline transactional-email HTML can't reference CSS custom properties — every color in this file is necessarily a literal hex mirroring the token, by the nature of the medium, not drift from the design system."
       }
     ]
   }

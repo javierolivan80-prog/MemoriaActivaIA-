@@ -28,17 +28,8 @@ export default function EntryShell({
         <Reveal className="w-full max-w-sm">{children}</Reveal>
       </div>
 
-      <div className="relative hidden overflow-hidden bg-surface-alt md:block">
-        <div
-          aria-hidden
-          className="animate-drift-slow pointer-events-none absolute -right-16 -top-16 h-80 w-80 rounded-full bg-secondary-light/70 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-10 h-72 w-72 rounded-full bg-primary-light/60 blur-3xl"
-        />
-
-        <div className="relative flex h-full flex-col justify-center px-16">
+      <div className="hidden bg-surface-alt md:block">
+        <div className="flex h-full flex-col justify-center px-16">
           <h2 className="max-w-md text-4xl leading-[1.15] font-semibold tracking-tight text-text-primary">
             Compañía real para quien más quieres
           </h2>

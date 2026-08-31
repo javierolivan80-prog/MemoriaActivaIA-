@@ -28,6 +28,12 @@ interface RecentSessionRow {
   elderly_profiles: { name: string } | null;
 }
 
+interface LatestCallRow {
+  elderly_id: string;
+  started_at: string;
+  call_summaries: { summary: string; mood_detected: string | null }[];
+}
+
 interface CallIssue {
   elderlyId: string;
   name: string;
@@ -64,6 +70,10 @@ const CALL_ISSUE_COPY: Record<
   },
 };
 
+// The product is Spain-only (see PRODUCT.md), so a fixed timezone for the
+// greeting and "when they spoke" phrasing is a real constraint, not a guess.
+const TZ = "Europe/Madrid";
+
 function isoHoursAgo(hours: number): string {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 }
@@ -71,6 +81,61 @@ function isoHoursAgo(hours: number): string {
 function minutesSince(iso: string): number {
   return (Date.now() - new Date(iso).getTime()) / 60_000;
 }
+
+function madridParts(date: Date) {
+  const parts = new Intl.DateTimeFormat("es-ES", {
+    timeZone: TZ,
+    hour: "numeric",
+    hour12: false,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return { hour: get("hour"), year: get("year"), month: get("month"), day: get("day") };
+}
+
+function greeting(): string {
+  const { hour } = madridParts(new Date());
+  if (hour < 6) return "Buenas noches";
+  if (hour < 13) return "Buenos días";
+  if (hour < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
+
+function daysBetween(a: ReturnType<typeof madridParts>, b: ReturnType<typeof madridParts>) {
+  const da = Date.UTC(a.year, a.month - 1, a.day);
+  const db = Date.UTC(b.year, b.month - 1, b.day);
+  return Math.round((db - da) / 86_400_000);
+}
+
+const WEEKDAYS = [
+  "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado",
+];
+
+// "esta mañana" / "ayer" / "el martes" — the same relative-day phrasing the
+// brief's own mockup uses, instead of a bare timestamp.
+function whenSpoke(iso: string): string {
+  const when = new Date(iso);
+  const nowParts = madridParts(new Date());
+  const whenParts = madridParts(when);
+  const diffDays = daysBetween(whenParts, nowParts);
+
+  if (diffDays === 0) {
+    if (whenParts.hour < 13) return "esta mañana";
+    if (whenParts.hour < 20) return "esta tarde";
+    return "esta noche";
+  }
+  if (diffDays === 1) return "ayer";
+  if (diffDays < 7) return `el ${WEEKDAYS[when.getDay()]}`;
+  return `el ${when.toLocaleDateString("es-ES", { day: "numeric", month: "long" })}`;
+}
+
+const MOOD_CLOSING: Record<string, string> = {
+  positivo: "Todo parece tranquilo.",
+  neutral: "Un día normal, sin nada que destacar.",
+  negativo: "Ha estado un poco bajo de ánimo. Puede que le venga bien que le llames tú también.",
+};
 
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
@@ -102,8 +167,9 @@ export default async function DashboardPage({
     (user.user_metadata?.name as string | undefined) ?? user.email ?? "";
 
   const since48h = isoHoursAgo(48);
+  const since14d = isoHoursAgo(24 * 14);
 
-  const [profilesResult, alertsResult, subscriptionsResult, recentSessionsResult] =
+  const [profilesResult, alertsResult, subscriptionsResult, recentSessionsResult, latestCallsResult] =
     await Promise.all([
       supabase
         .from("elderly_profiles")
@@ -129,6 +195,13 @@ export default async function DashboardPage({
         .gte("started_at", since48h)
         .order("started_at", { ascending: false })
         .returns<RecentSessionRow[]>(),
+      supabase
+        .from("conversation_sessions")
+        .select("elderly_id, started_at, call_summaries(summary, mood_detected)")
+        .eq("status", "completed")
+        .gte("started_at", since14d)
+        .order("started_at", { ascending: false })
+        .returns<LatestCallRow[]>(),
     ]);
 
   const profiles = profilesResult.data;
@@ -146,6 +219,14 @@ export default async function DashboardPage({
   for (const subscription of subscriptionsResult.data ?? []) {
     if (!latestSubscriptionByElderly.has(subscription.elderly_id)) {
       latestSubscriptionByElderly.set(subscription.elderly_id, subscription);
+    }
+  }
+
+  const latestCallByElderly = new Map<string, LatestCallRow>();
+  for (const row of latestCallsResult.data ?? []) {
+    if (row.call_summaries.length === 0) continue;
+    if (!latestCallByElderly.has(row.elderly_id)) {
+      latestCallByElderly.set(row.elderly_id, row);
     }
   }
 
@@ -195,10 +276,10 @@ export default async function DashboardPage({
 
   return (
     <div className="min-h-screen bg-background px-4 py-16">
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-2xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
-            Hola {displayName}
+            {greeting()}, {displayName}
           </h1>
           <LogoutButton />
         </div>
@@ -237,28 +318,30 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="mt-12">
-          <AlertsPanel initialAlerts={alerts} />
-        </div>
+        {alerts.length > 0 && (
+          <div className="mt-8">
+            <AlertsPanel initialAlerts={alerts} />
+          </div>
+        )}
 
-        <div className="mt-12">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-text-primary">
-              Tus familiares
-            </h2>
-            {hasProfiles && (
+        <div className="mt-12 space-y-5">
+          {hasProfiles && (
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-text-muted">
+                Cómo están
+              </h2>
               <Link
                 href="/profile/new"
-                className={`${buttonBaseClasses} ${buttonVariantClasses.primary} px-4 py-2 text-sm`}
+                className="text-sm font-medium text-primary transition-colors hover:text-primary-hover"
               >
                 + Añadir familiar
               </Link>
-            )}
-          </div>
+            </div>
+          )}
 
           {!hasProfiles && (
             <Reveal delay={80}>
-              <Card className="mt-6 text-center">
+              <Card className="text-center">
                 <UserPlus
                   className="mx-auto h-12 w-12 text-primary"
                   strokeWidth={1.5}
@@ -276,92 +359,111 @@ export default async function DashboardPage({
             </Reveal>
           )}
 
-          {hasProfiles && (
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              {profiles!.map((profile, index) => {
-                const subscription = latestSubscriptionByElderly.get(
-                  profile.id
-                );
-                const isActivePlan = subscription
-                  ? ACTIVE_STATUSES.has(subscription.status)
-                  : false;
+          {hasProfiles &&
+            profiles!.map((profile, index) => {
+              const subscription = latestSubscriptionByElderly.get(profile.id);
+              const isActivePlan = subscription
+                ? ACTIVE_STATUSES.has(subscription.status)
+                : false;
+              const issue = callIssueByElderly.get(profile.id);
+              const latestCall = latestCallByElderly.get(profile.id);
+              const summary = latestCall?.call_summaries[0];
 
-                return (
-                  <Reveal key={profile.id} delay={index * 80}>
-                    <Card className="transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-soft-md">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xl font-semibold text-text-primary">
-                            {profile.name}
-                          </p>
-                          <p className="text-base text-text-secondary">
-                            {profile.age
-                              ? `${profile.age} años`
-                              : "Edad sin especificar"}
-                          </p>
-                        </div>
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
-                            profile.active
-                              ? "bg-secondary-light text-text-primary"
-                              : "bg-surface-alt text-text-muted"
-                          }`}
-                        >
-                          {profile.active && (
-                            <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />
-                          )}
-                          {profile.active ? "Activo" : "Inactivo"}
-                        </span>
-                      </div>
-
-                      <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
-                        {subscription ? (
-                          <div className="flex items-center gap-2">
-                            <PhoneCall
-                              className="h-4 w-4 text-primary"
-                              strokeWidth={1.75}
-                            />
-                            <div>
-                              <p className="text-sm font-medium text-text-primary">
-                                Plan {PLANS[subscription.plan_type].name}
-                              </p>
-                              <p
-                                className={`text-sm ${
-                                  isActivePlan
-                                    ? "text-text-muted"
-                                    : "text-alert-warning"
-                                }`}
-                              >
-                                {STATUS_LABELS[subscription.status] ??
-                                  subscription.status}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <Link
-                            href={`/pricing?elderlyId=${profile.id}`}
-                            className="text-base font-medium text-primary transition-colors hover:text-primary-hover"
-                          >
-                            Elegir plan
-                          </Link>
+              return (
+                <Reveal key={profile.id} delay={index * 90}>
+                  <Card className="transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-soft-md">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-lg font-semibold text-text-primary">
+                        {profile.name}
+                      </p>
+                      <span
+                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+                          profile.active
+                            ? "bg-secondary-light text-text-primary"
+                            : "bg-surface-alt text-text-muted"
+                        }`}
+                      >
+                        {profile.active && (
+                          <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />
                         )}
+                        {profile.active ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
 
-                        <div className="flex items-center gap-2">
-                          {subscription && <ManageSubscriptionButton />}
-                          <Link
-                            href={`/elderly/${profile.id}`}
-                            className={`${buttonBaseClasses} ${buttonVariantClasses.ghost} px-3 py-2 text-sm`}
-                          >
-                            Ver detalles
-                          </Link>
-                        </div>
+                    {issue ? (
+                      <p className="mt-3 text-base leading-relaxed text-text-secondary">
+                        {CALL_ISSUE_COPY[issue.kind].message(profile.name)}
+                      </p>
+                    ) : summary ? (
+                      <div className="mt-3">
+                        <p className="text-base text-text-secondary">
+                          Habló contigo {whenSpoke(latestCall.started_at)}.
+                        </p>
+                        <p className="mt-2 text-base leading-relaxed text-text-primary">
+                          &ldquo;{summary.summary}&rdquo;
+                        </p>
+                        {summary.mood_detected && MOOD_CLOSING[summary.mood_detected] && (
+                          <p className="mt-2 text-sm text-text-muted">
+                            {MOOD_CLOSING[summary.mood_detected]}
+                          </p>
+                        )}
                       </div>
-                    </Card>
-                  </Reveal>
-                );
-              })}
-            </div>
-          )}
+                    ) : (
+                      <p className="mt-3 text-base text-text-secondary">
+                        Aún no habéis tenido ninguna llamada
+                        {profile.preferred_call_time
+                          ? ` — la primera está programada a las ${profile.preferred_call_time.slice(0, 5)}`
+                          : ""}
+                        .
+                      </p>
+                    )}
+
+                    <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
+                      {subscription ? (
+                        <div className="flex items-center gap-2">
+                          <PhoneCall
+                            className="h-4 w-4 text-primary"
+                            strokeWidth={1.75}
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">
+                              Plan {PLANS[subscription.plan_type].name}
+                            </p>
+                            <p
+                              className={`text-sm ${
+                                isActivePlan
+                                  ? "text-text-muted"
+                                  : "text-alert-warning"
+                              }`}
+                            >
+                              {STATUS_LABELS[subscription.status] ??
+                                subscription.status}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/pricing?elderlyId=${profile.id}`}
+                          className="text-base font-medium text-primary transition-colors hover:text-primary-hover"
+                        >
+                          Elegir plan
+                        </Link>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        {subscription && <ManageSubscriptionButton />}
+                        <Link
+                          href={`/elderly/${profile.id}`}
+                          className={`${buttonBaseClasses} ${buttonVariantClasses.ghost} px-3 py-2 text-sm`}
+                        >
+                          Ver más
+                        </Link>
+                      </div>
+                    </div>
+                  </Card>
+                </Reveal>
+              );
+            })}
         </div>
       </div>
     </div>
