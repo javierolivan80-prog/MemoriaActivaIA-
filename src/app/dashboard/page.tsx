@@ -4,12 +4,13 @@ import { AlertCircle, CheckCircle, Clock, PhoneCall, UserPlus } from "lucide-rea
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
 import AlertsPanel, { type AlertItem } from "@/components/dashboard/AlertsPanel";
+import AttachFamilyPlanButton from "@/components/dashboard/AttachFamilyPlanButton";
 import ManageSubscriptionButton from "@/components/dashboard/ManageSubscriptionButton";
 import Card from "@/components/ui/Card";
 import Reveal from "@/components/ui/Reveal";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
-import { PLANS } from "@/lib/stripe/plans";
-import type { ElderlyProfile, Subscription } from "@/types";
+import { MAX_FAMILY_MEMBERS, PLANS } from "@/lib/stripe/plans";
+import type { ElderlyProfile, Subscription, SubscriptionMember } from "@/types";
 
 interface AlertRow {
   id: string;
@@ -169,40 +170,52 @@ export default async function DashboardPage({
   const since48h = isoHoursAgo(48);
   const since14d = isoHoursAgo(24 * 14);
 
-  const [profilesResult, alertsResult, subscriptionsResult, recentSessionsResult, latestCallsResult] =
-    await Promise.all([
-      supabase
-        .from("elderly_profiles")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .returns<ElderlyProfile[]>(),
-      supabase
-        .from("alerts")
-        .select("id, message, alert_level, created_at, elderly_profiles(name)")
-        .eq("user_id", user.id)
-        .eq("is_read", false)
-        .order("created_at", { ascending: false })
-        .returns<AlertRow[]>(),
-      supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .returns<Subscription[]>(),
-      supabase
-        .from("conversation_sessions")
-        .select("id, elderly_id, status, started_at, call_summaries(id), elderly_profiles(name)")
-        .gte("started_at", since48h)
-        .order("started_at", { ascending: false })
-        .returns<RecentSessionRow[]>(),
-      supabase
-        .from("conversation_sessions")
-        .select("elderly_id, started_at, call_summaries(summary, mood_detected)")
-        .eq("status", "completed")
-        .gte("started_at", since14d)
-        .order("started_at", { ascending: false })
-        .returns<LatestCallRow[]>(),
-    ]);
+  const [
+    profilesResult,
+    alertsResult,
+    subscriptionsResult,
+    recentSessionsResult,
+    latestCallsResult,
+    subscriptionMembersResult,
+  ] = await Promise.all([
+    supabase
+      .from("elderly_profiles")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .returns<ElderlyProfile[]>(),
+    supabase
+      .from("alerts")
+      .select("id, message, alert_level, created_at, elderly_profiles(name)")
+      .eq("user_id", user.id)
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .returns<AlertRow[]>(),
+    supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .returns<Subscription[]>(),
+    supabase
+      .from("conversation_sessions")
+      .select("id, elderly_id, status, started_at, call_summaries(id), elderly_profiles(name)")
+      .gte("started_at", since48h)
+      .order("started_at", { ascending: false })
+      .returns<RecentSessionRow[]>(),
+    supabase
+      .from("conversation_sessions")
+      .select("elderly_id, started_at, call_summaries(summary, mood_detected)")
+      .eq("status", "completed")
+      .gte("started_at", since14d)
+      .order("started_at", { ascending: false })
+      .returns<LatestCallRow[]>(),
+    // RLS already scopes this to subscriptions the caller owns, so no
+    // explicit user_id filter is needed here.
+    supabase
+      .from("subscription_members")
+      .select("subscription_id, elderly_id")
+      .returns<Pick<SubscriptionMember, "subscription_id" | "elderly_id">[]>(),
+  ]);
 
   const profiles = profilesResult.data;
   const hasProfiles = (profiles?.length ?? 0) > 0;
@@ -217,10 +230,31 @@ export default async function DashboardPage({
 
   const latestSubscriptionByElderly = new Map<string, Subscription>();
   for (const subscription of subscriptionsResult.data ?? []) {
-    if (!latestSubscriptionByElderly.has(subscription.elderly_id)) {
+    if (subscription.elderly_id && !latestSubscriptionByElderly.has(subscription.elderly_id)) {
       latestSubscriptionByElderly.set(subscription.elderly_id, subscription);
     }
   }
+
+  // A "familiar" subscription covers whichever profiles are listed in
+  // subscription_members rather than pointing at one elderly_id — resolve
+  // that indirection so the rest of the page can treat a family-covered
+  // profile exactly like one with its own individual subscription.
+  const familySubscription = (subscriptionsResult.data ?? []).find(
+    (s) => s.plan_type === "familiar" && ACTIVE_STATUSES.has(s.status)
+  );
+  const familyMemberElderlyIds = new Set(
+    (subscriptionMembersResult.data ?? [])
+      .filter((m) => m.subscription_id === familySubscription?.id)
+      .map((m) => m.elderly_id)
+  );
+  for (const elderlyId of familyMemberElderlyIds) {
+    if (familySubscription && !latestSubscriptionByElderly.has(elderlyId)) {
+      latestSubscriptionByElderly.set(elderlyId, familySubscription);
+    }
+  }
+  const familyHasRoom = Boolean(
+    familySubscription && familyMemberElderlyIds.size < MAX_FAMILY_MEMBERS
+  );
 
   const latestCallByElderly = new Map<string, LatestCallRow>();
   for (const row of latestCallsResult.data ?? []) {
@@ -441,6 +475,8 @@ export default async function DashboardPage({
                             </p>
                           </div>
                         </div>
+                      ) : familyHasRoom ? (
+                        <AttachFamilyPlanButton elderlyId={profile.id} />
                       ) : (
                         <Link
                           href={`/pricing?elderlyId=${profile.id}`}

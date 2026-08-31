@@ -42,6 +42,27 @@ export const PLANS: Record<PlanType, PlanDefinition> = {
       "Prioridad en soporte",
     ],
   },
+  familiar: {
+    planType: "familiar",
+    name: "Familiar",
+    priceEur: 250,
+    callsPerDay: 1,
+    minutesPerCall: 5,
+    description: "Hasta 10 familiares, 1 llamada al día de 5 minutos cada uno",
+    features: [
+      "Hasta 10 familiares en un solo plan",
+      "1 llamada diaria de 5 minutos por familiar",
+      "Resumen después de cada llamada",
+      "Alertas si algo importante ocurre",
+      "Cancela cuando quieras",
+      "Prioridad en soporte",
+    ],
+  },
 };
 
-export const PLAN_ORDER: PlanType[] = ["esencial", "completo"];
+// A "familiar" subscription is not tied to one relative — it's a pool
+// other profiles attach to (see subscription_members). This is how many
+// it can hold; enforced in the attach API, not in the database.
+export const MAX_FAMILY_MEMBERS = 10;
+
+export const PLAN_ORDER: PlanType[] = ["esencial", "completo", "familiar"];

@@ -58,125 +58,120 @@ export default function PricingCards({
 
   return (
     <div>
-      <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <h1 className="text-4xl leading-tight font-semibold tracking-tight text-text-primary">
-            Elige cómo acompañarle
-          </h1>
-          <p className="mt-4 max-w-sm text-lg text-text-secondary">
-            Cambia o cancela cuando quieras, sin permanencia. Los dos planes
-            incluyen resumen y alertas después de cada llamada. La diferencia
-            está en cuántas veces al día llamamos.
-          </p>
+      <div className="mx-auto max-w-xl text-center">
+        <h1 className="text-4xl leading-tight font-semibold tracking-tight text-text-primary">
+          Elige cómo acompañarle
+        </h1>
+        <p className="mt-4 text-lg text-text-secondary">
+          Cambia o cancela cuando quieras, sin permanencia. Todos los planes
+          incluyen resumen y alertas después de cada llamada.
+        </p>
 
-          {profiles.length > 1 && (
-            <div className="mt-8 max-w-xs">
-              <label
-                htmlFor="elderly-select"
-                className="block text-sm font-medium text-text-primary"
+        {profiles.length > 1 && (
+          <div className="mx-auto mt-8 max-w-xs text-left">
+            <label
+              htmlFor="elderly-select"
+              className="block text-sm font-medium text-text-primary"
+            >
+              ¿Para quién es el plan?
+            </label>
+            <select
+              id="elderly-select"
+              value={elderlyId}
+              onChange={(event) => setElderlyId(event.target.value)}
+              className={inputClasses}
+            >
+              {profiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {error && <p className="mt-6 text-base text-alert-urgent">{error}</p>}
+      </div>
+
+      <div className="mt-12 grid gap-8 md:grid-cols-3">
+        {PLAN_ORDER.map((planType, index) => {
+          const plan = PLANS[planType];
+          const isPopular = planType === "completo";
+          const ctaClasses = `${buttonBaseClasses} ${
+            isPopular
+              ? buttonVariantClasses.primary
+              : buttonVariantClasses.secondary
+          } mt-8 w-full`;
+
+          return (
+            <Reveal
+              key={planType}
+              delay={index * 90}
+              className={isPopular ? "" : "md:mt-10"}
+            >
+              <div
+                className={`relative flex h-full flex-col rounded-2xl bg-surface p-8 shadow-soft transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-soft-md ${
+                  isPopular
+                    ? "border-2 border-primary shadow-soft-md"
+                    : "border border-border"
+                }`}
               >
-                ¿Para quién es el plan?
-              </label>
-              <select
-                id="elderly-select"
-                value={elderlyId}
-                onChange={(event) => setElderlyId(event.target.value)}
-                className={inputClasses}
-              >
-                {profiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+                {isPopular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-semibold text-white dark:text-background">
+                    Más elegido
+                  </span>
+                )}
+                <h2 className="text-2xl font-semibold tracking-tight text-text-primary">
+                  {plan.name}
+                </h2>
+                <p className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-semibold tracking-tight text-text-primary">
+                    {plan.priceEur.toFixed(2).replace(".", ",")}€
+                  </span>
+                  <span className="text-base text-text-muted">/mes</span>
+                </p>
+                <p className="mt-3 text-base text-text-secondary">
+                  {plan.description}
+                </p>
 
-          {error && (
-            <p className="mt-6 text-base text-alert-urgent">{error}</p>
-          )}
-        </div>
+                <ul className="mt-6 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5">
+                      <Check
+                        className="mt-0.5 h-5 w-5 shrink-0 text-secondary"
+                        strokeWidth={2}
+                      />
+                      <span className="text-base text-text-secondary">
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
 
-        <div className="grid gap-8 sm:grid-cols-2">
-          {PLAN_ORDER.map((planType, index) => {
-            const plan = PLANS[planType];
-            const isPopular = planType === "completo";
-            const ctaClasses = `${buttonBaseClasses} ${
-              isPopular
-                ? buttonVariantClasses.primary
-                : buttonVariantClasses.secondary
-            } mt-8 w-full`;
-
-            return (
-              <Reveal
-                key={planType}
-                delay={index * 90}
-                className={isPopular ? "" : "sm:mt-10"}
-              >
-                <div
-                  className={`relative flex h-full flex-col rounded-2xl bg-surface p-8 shadow-soft transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-soft-md ${
-                    isPopular
-                      ? "border-2 border-primary shadow-soft-md"
-                      : "border border-border"
-                  }`}
-                >
-                  {isPopular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-semibold text-white dark:text-background">
-                      Más elegido
-                    </span>
-                  )}
-                  <h2 className="text-2xl font-semibold tracking-tight text-text-primary">
-                    {plan.name}
-                  </h2>
-                  <p className="mt-4 flex items-baseline gap-1">
-                    <span className="text-4xl font-semibold tracking-tight text-text-primary">
-                      {plan.priceEur.toFixed(2).replace(".", ",")}€
-                    </span>
-                    <span className="text-base text-text-muted">/mes</span>
-                  </p>
-                  <p className="mt-3 text-base text-text-secondary">
-                    {plan.description}
-                  </p>
-
-                  <ul className="mt-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2.5">
-                        <Check
-                          className="mt-0.5 h-5 w-5 shrink-0 text-secondary"
-                          strokeWidth={2}
-                        />
-                        <span className="text-base text-text-secondary">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {isAuthenticated ? (
-                    <button
-                      onClick={() => handleChoosePlan(planType)}
-                      disabled={loadingPlan !== null}
-                      className={ctaClasses}
-                    >
-                      {loadingPlan === planType ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Redirigiendo...
-                        </>
-                      ) : (
-                        `Elegir ${plan.name}`
-                      )}
-                    </button>
-                  ) : (
-                    <Link href="/auth/signup" className={ctaClasses}>
-                      {`Elegir ${plan.name}`}
-                    </Link>
-                  )}
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => handleChoosePlan(planType)}
+                    disabled={loadingPlan !== null}
+                    className={ctaClasses}
+                  >
+                    {loadingPlan === planType ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Redirigiendo...
+                      </>
+                    ) : (
+                      `Elegir ${plan.name}`
+                    )}
+                  </button>
+                ) : (
+                  <Link href="/auth/signup" className={ctaClasses}>
+                    {`Elegir ${plan.name}`}
+                  </Link>
+                )}
+              </div>
+            </Reveal>
+          );
+        })}
       </div>
 
       <p className="mx-auto mt-16 max-w-md text-center text-sm text-text-muted">

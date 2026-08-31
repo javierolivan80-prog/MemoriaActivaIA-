@@ -24,9 +24,9 @@ export interface ElderlyProfile {
   preferred_call_time: string | null;
 }
 
-export type PlanType = "esencial" | "completo";
+export type PlanType = "esencial" | "completo" | "familiar";
 export type CallsPerDay = 1 | 2;
-export type MinutesPerCall = 4;
+export type MinutesPerCall = 4 | 5;
 export type SubscriptionStatus =
   | "active"
   | "past_due"
@@ -38,7 +38,9 @@ export type SubscriptionStatus =
 export interface Subscription {
   id: string;
   user_id: string;
-  elderly_id: string;
+  // Null for a "familiar" subscription — it covers whichever profiles are
+  // listed in SubscriptionMember instead of a single relative.
+  elderly_id: string | null;
   plan_type: PlanType;
   calls_per_day: CallsPerDay;
   minutes_per_call: MinutesPerCall;
@@ -46,6 +48,14 @@ export interface Subscription {
   stripe_customer_id: string;
   stripe_subscription_id: string;
   current_period_end: string | null;
+  created_at: string;
+}
+
+// One row per elderly profile covered by a "familiar" subscription.
+export interface SubscriptionMember {
+  id: string;
+  subscription_id: string;
+  elderly_id: string;
   created_at: string;
 }
 

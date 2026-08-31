@@ -55,10 +55,10 @@ export async function POST(request: Request) {
           ? session.customer
           : session.customer.id;
 
-      const elderlyId = session.metadata?.elderlyId;
+      const elderlyId = session.metadata?.elderlyId || null;
       const userId = session.metadata?.userId;
 
-      if (!elderlyId || !userId) break;
+      if (!userId) break;
 
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const priceId = subscription.items.data[0]?.price.id;
@@ -66,23 +66,44 @@ export async function POST(request: Request) {
       const plan = planType ? PLANS[planType] : null;
 
       if (!plan) break;
+      // A non-family plan always belongs to one relative; the checkout
+      // route already refused to start a session without elderlyId in
+      // that case, but a webhook must not trust client-set metadata
+      // blindly — re-check the invariant here too.
+      if (plan.planType !== "familiar" && !elderlyId) break;
 
-      await supabase.from("subscriptions").upsert(
-        {
-          user_id: userId,
-          elderly_id: elderlyId,
-          plan_type: plan.planType,
-          calls_per_day: plan.callsPerDay,
-          minutes_per_call: plan.minutesPerCall,
-          status: subscription.status,
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscription.id,
-          current_period_end: new Date(
-            subscription.items.data[0].current_period_end * 1000
-          ).toISOString(),
-        },
-        { onConflict: "stripe_subscription_id" }
-      );
+      const { data: savedSubscription } = await supabase
+        .from("subscriptions")
+        .upsert(
+          {
+            user_id: userId,
+            elderly_id: plan.planType === "familiar" ? null : elderlyId,
+            plan_type: plan.planType,
+            calls_per_day: plan.callsPerDay,
+            minutes_per_call: plan.minutesPerCall,
+            status: subscription.status,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscription.id,
+            current_period_end: new Date(
+              subscription.items.data[0].current_period_end * 1000
+            ).toISOString(),
+          },
+          { onConflict: "stripe_subscription_id" }
+        )
+        .select("id")
+        .single();
+
+      // Checkout was launched from a specific relative's pricing page —
+      // attach them as the family plan's first member instead of leaving
+      // a paid-for plan with nobody on it.
+      if (plan.planType === "familiar" && elderlyId && savedSubscription) {
+        await supabase
+          .from("subscription_members")
+          .upsert(
+            { subscription_id: savedSubscription.id, elderly_id: elderlyId },
+            { onConflict: "elderly_id" }
+          );
+      }
       break;
     }
 

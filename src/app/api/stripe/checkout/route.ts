@@ -4,10 +4,20 @@ import { createClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/server";
 import { getPriceIdForPlan } from "@/lib/stripe/priceMap";
 
-const CheckoutSchema = z.object({
-  planType: z.enum(["esencial", "completo"]),
-  elderlyId: z.uuid(),
-});
+const CheckoutSchema = z
+  .object({
+    planType: z.enum(["esencial", "completo", "familiar"]),
+    // Required for a single-relative plan. Optional for "familiar": the
+    // family plan is bought before any relative may exist yet. If it's
+    // sent anyway (e.g. checkout launched from a specific profile's
+    // pricing page), the webhook attaches that profile as the first
+    // member once payment completes.
+    elderlyId: z.uuid().optional(),
+  })
+  .refine((data) => data.planType === "familiar" || data.elderlyId, {
+    message: "Falta elderlyId",
+    path: ["elderlyId"],
+  });
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -31,18 +41,20 @@ export async function POST(request: Request) {
 
   const { planType, elderlyId } = parsed.data;
 
-  const { data: profile } = await supabase
-    .from("elderly_profiles")
-    .select("id")
-    .eq("id", elderlyId)
-    .eq("user_id", user.id)
-    .single();
+  if (elderlyId) {
+    const { data: profile } = await supabase
+      .from("elderly_profiles")
+      .select("id")
+      .eq("id", elderlyId)
+      .eq("user_id", user.id)
+      .single();
 
-  if (!profile) {
-    return NextResponse.json(
-      { error: "Perfil no encontrado" },
-      { status: 404 }
-    );
+    if (!profile) {
+      return NextResponse.json(
+        { error: "Perfil no encontrado" },
+        { status: 404 }
+      );
+    }
   }
 
   const stripe = getStripeClient();
@@ -73,9 +85,11 @@ export async function POST(request: Request) {
       customer: customerId,
       line_items: [{ price: getPriceIdForPlan(planType), quantity: 1 }],
       success_url: `${appUrl}/dashboard?checkout=success`,
-      cancel_url: `${appUrl}/pricing?elderlyId=${elderlyId}`,
+      cancel_url: elderlyId
+        ? `${appUrl}/pricing?elderlyId=${elderlyId}`
+        : `${appUrl}/pricing`,
       metadata: {
-        elderlyId,
+        ...(elderlyId ? { elderlyId } : {}),
         userId: user.id,
         planType,
       },

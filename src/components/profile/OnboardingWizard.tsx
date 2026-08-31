@@ -178,7 +178,7 @@ export default function OnboardingWizard({
     const hobbiesAndInterests = splitList(finalHobbies);
     const cleanedPhone = phone.replace(/\s+/g, "");
 
-    const { error: insertError } = await supabase
+    const { data: createdProfile, error: insertError } = await supabase
       .from("elderly_profiles")
       .insert({
         user_id: user.id,
@@ -195,14 +195,25 @@ export default function OnboardingWizard({
         favorite_topics: splitList(finalFavoriteTopics),
         sensitive_topics: combinedSensitiveTopics,
         preferred_call_time: `${callTime1}:00`,
-      });
+      })
+      .select("id")
+      .single();
 
     setSaving(false);
 
-    if (insertError) {
+    if (insertError || !createdProfile) {
       setError("No se pudo guardar el perfil. Inténtalo de nuevo.");
       return;
     }
+
+    // Best-effort: if the family already has an active "familiar" plan
+    // with room, this profile is covered immediately — no separate
+    // "elige plan" step for the family member to remember later. A
+    // family plan not existing (or being full) is the normal case, not
+    // an error, so its failure is silently ignored here.
+    await apiFetch(`/api/elderly/${createdProfile.id}/attach-family-plan`, {
+      method: "POST",
+    });
 
     setSaved(true);
     await new Promise((resolve) =>
