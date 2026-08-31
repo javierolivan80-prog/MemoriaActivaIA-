@@ -2,7 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PATHS = ["/dashboard", "/elderly", "/pricing", "/profile"];
+// /pricing is public on purpose: a family should be able to see what it costs
+// before creating an account. The page itself renders a signup CTA when there
+// is no session, and the checkout route still requires one.
+const PROTECTED_PATHS = ["/dashboard", "/elderly", "/profile"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -50,7 +53,6 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/elderly/:path*",
-    "/pricing/:path*",
     "/profile/:path*",
   ],
 };
