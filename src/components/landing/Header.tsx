@@ -26,7 +26,11 @@ export default function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="shrink-0" aria-label="Memoria Activa, ir al inicio">
+        <Link
+          href="/"
+          className="-m-2.5 shrink-0 p-2.5"
+          aria-label="Memoria Activa, ir al inicio"
+        >
           <Image
             src="/brand/icon-transparent.png"
             alt=""

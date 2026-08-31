@@ -13,7 +13,7 @@ export default function EntryShell({
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-20">
         <Link
           href="/"
-          className="mb-10 inline-block w-fit"
+          className="-m-2.5 mb-[1.875rem] inline-block w-fit p-2.5"
           aria-label="Memoria Activa, ir al inicio"
         >
           <Image

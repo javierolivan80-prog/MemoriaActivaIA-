@@ -22,7 +22,7 @@ function initials(name: string): string {
 }
 
 const TABS: TabItem[] = [
-  { id: "historial", label: "Historial" },
+  { id: "historial", label: "Conversaciones" },
   { id: "calendario", label: "Calendario" },
   { id: "recuerdos", label: "Recuerdos" },
   { id: "chatear", label: "Chatear" },
