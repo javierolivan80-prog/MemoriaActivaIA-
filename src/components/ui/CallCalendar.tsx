@@ -317,7 +317,7 @@ export default function CallCalendar({
                 </span>
               )}
               {hint === cell.key && (
-                <span className="absolute -bottom-6 left-1/2 z-10 w-max max-w-[6.5rem] -translate-x-1/2 rounded-lg bg-text-primary px-2 py-1 text-center text-xs leading-tight text-white">
+                <span className="absolute -bottom-6 left-1/2 z-10 w-max max-w-[6.5rem] -translate-x-1/2 rounded-lg bg-text-primary px-2 py-1 text-center text-xs leading-tight text-white dark:text-background">
                   Sin llamada este día
                 </span>
               )}

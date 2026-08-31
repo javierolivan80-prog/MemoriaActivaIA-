@@ -1,6 +1,14 @@
 @import "tailwindcss";
 
-@theme inline {
+/* Plain @theme (not inline): Tailwind needs this to generate utilities
+   that reference var(--color-*) at paint time instead of inlining the
+   literal hex into each class at build time — the dark-mode override
+   below only works because these stay live variables. --font-sans is
+   kept in a separate `@theme inline` block underneath: that one *is*
+   the documented case for `inline`, since its value is itself a
+   var() (next/font's generated --font-figtree), which needs resolving
+   at theme-definition time rather than doubly-indirected at paint time. */
+@theme {
   /* Off-white / white: warmth and surface, not brand color. */
   --color-background: #f7f8f6;
   --color-surface: #ffffff;
@@ -35,8 +43,52 @@
 
   --shadow-soft: 0 4px 20px rgba(6, 47, 75, 0.08);
   --shadow-soft-md: 0 8px 30px rgba(6, 47, 75, 0.1);
+}
 
+@theme inline {
   --font-sans: var(--font-figtree);
+}
+
+/* Dark mode follows the system setting — there is no in-app toggle yet.
+   Every color above is a CSS custom property, so overriding the values
+   here is enough to re-theme every Tailwind utility that reads them
+   (bg-primary, text-text-secondary, ...); no per-component dark: classes
+   needed except the small set of places below where a fixed white/black
+   literal sits on top of a token that flips lightness between themes.
+
+   The background sits well below the logo mark's own darkest tone
+   (~#04395c) rather than close to it, so the unaltered asset stays a
+   visible lighter shape instead of blending into a same-toned backdrop —
+   see DESIGN.md's Canonical-Asset Rule. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0a1520;
+    --color-surface: #10202c;
+    --color-surface-alt: #162a38;
+
+    --color-primary: #4a90b8;
+    --color-primary-hover: #5aa3ca;
+    --color-primary-light: #203f53;
+
+    --color-secondary: #639293;
+    --color-secondary-light: #29424b;
+    --color-secondary-text: #639293;
+
+    --color-text-primary: #eef3f5;
+    --color-text-secondary: #bdcad1;
+    --color-text-muted: #abbbc4;
+    --color-border: #334756;
+
+    --color-alert-urgent: #cb7f72;
+    --color-alert-urgent-bg: #2a262c;
+    --color-alert-warning: #af8d63;
+    --color-alert-warning-bg: #242929;
+    --color-alert-info: #879aac;
+    --color-alert-info-bg: #1a2c3a;
+
+    --shadow-soft: 0 4px 20px rgba(2, 6, 10, 0.45);
+    --shadow-soft-md: 0 8px 30px rgba(2, 6, 10, 0.55);
+  }
 }
 
 body {

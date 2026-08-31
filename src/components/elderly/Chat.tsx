@@ -473,7 +473,7 @@ function ThreadConversation({
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-base leading-relaxed ${
                   message.role === "user"
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-white dark:text-background"
                     : "bg-surface-alt text-text-primary"
                 }`}
               >
@@ -513,7 +513,7 @@ function ThreadConversation({
           onClick={() => handleSend(input)}
           disabled={sending || !input.trim()}
           aria-label="Enviar mensaje"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-[background-color,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:pointer-events-none disabled:translate-y-0 disabled:bg-surface-alt disabled:text-text-muted"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white dark:text-background transition-[background-color,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:pointer-events-none disabled:translate-y-0 disabled:bg-surface-alt disabled:text-text-muted"
         >
           <Send className="h-5 w-5" />
         </button>

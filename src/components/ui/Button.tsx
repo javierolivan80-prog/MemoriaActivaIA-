@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes } from "react";
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 
 export const buttonVariantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-white hover:bg-primary-hover",
+  primary: "bg-primary text-white dark:text-background hover:bg-primary-hover",
   secondary:
     "border border-primary text-primary bg-transparent hover:bg-primary-light",
   ghost: "text-text-primary hover:bg-surface-alt",

@@ -114,7 +114,7 @@ export default function AlertsPanel({
           <span
             aria-live="polite"
             aria-atomic="true"
-            className="animate-pop-in rounded-full bg-alert-urgent px-3 py-1 text-sm font-medium text-white"
+            className="animate-pop-in rounded-full bg-alert-urgent px-3 py-1 text-sm font-medium text-white dark:text-background"
           >
             {alerts.length}{" "}
             {alerts.length === 1 ? "alerta nueva" : "alertas nuevas"}
