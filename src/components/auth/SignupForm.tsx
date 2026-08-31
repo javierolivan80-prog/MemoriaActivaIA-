@@ -71,7 +71,7 @@ export default function SignupForm() {
     return (
       <div className="text-center">
         <Mail className="mx-auto h-9 w-9 text-primary" strokeWidth={1.5} />
-        <h1 className="mt-5 font-serif text-3xl text-text-primary">
+        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-text-primary">
           Revisa tu email
         </h1>
         <p className="mt-2 text-text-secondary">
@@ -91,7 +91,7 @@ export default function SignupForm() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-text-primary">
+      <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
         Crea tu cuenta
       </h1>
       <p className="mt-2 mb-6 text-text-secondary">

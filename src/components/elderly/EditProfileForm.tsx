@@ -100,7 +100,7 @@ export default function EditProfileForm({
   return (
     <div className="mx-auto w-full max-w-lg space-y-12">
       <Reveal>
-        <h2 className="font-serif text-2xl text-text-primary">
+        <h2 className="text-2xl font-semibold tracking-tight text-text-primary">
           Datos básicos
         </h2>
         <div className="mt-5 space-y-5">
@@ -147,7 +147,7 @@ export default function EditProfileForm({
       </Reveal>
 
       <Reveal delay={60}>
-        <h2 className="font-serif text-2xl text-text-primary">
+        <h2 className="text-2xl font-semibold tracking-tight text-text-primary">
           Cómo es {profile.name.split(" ")[0]}
         </h2>
         <div className="mt-5 space-y-5">
@@ -183,7 +183,7 @@ export default function EditProfileForm({
       </Reveal>
 
       <Reveal delay={120}>
-        <h2 className="font-serif text-2xl text-text-primary">Privacidad</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-text-primary">Privacidad</h2>
         <div className="mt-5">
           <Textarea
             label="Temas sensibles"

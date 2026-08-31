@@ -11,7 +11,7 @@ export default function InviteAuthPrompt({ token }: { token: string }) {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-text-primary">
+      <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
         Te han invitado a Memoria Activa
       </h1>
       <p className="mt-3 text-text-secondary">

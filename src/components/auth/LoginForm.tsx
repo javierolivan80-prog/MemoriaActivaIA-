@@ -59,7 +59,7 @@ export default function LoginForm() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-text-primary">
+      <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
         Bienvenido de nuevo
       </h1>
       <p className="mt-2 mb-6 text-text-secondary">

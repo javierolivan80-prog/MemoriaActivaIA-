@@ -1,30 +1,42 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #fdf8f3;
+  /* Off-white / white: warmth and surface, not brand color. */
+  --color-background: #f7f8f6;
   --color-surface: #ffffff;
-  --color-surface-alt: #f5ede4;
-  --color-primary: #8f5238;
-  --color-primary-hover: #6b3d2a;
-  --color-primary-light: #f0ddd3;
-  --color-secondary: #6b8f71;
-  --color-secondary-light: #e1ebe2;
-  --color-text-primary: #2d2a26;
-  --color-text-secondary: #6b6560;
-  --color-text-muted: #6f665e;
-  --color-border: #e8dfd5;
-  --color-alert-urgent: #c24b3f;
-  --color-alert-urgent-bg: #fbeae7;
-  --color-alert-warning: #c98a3a;
-  --color-alert-warning-bg: #fbf1e3;
-  --color-alert-info: #4a7a8c;
-  --color-alert-info-bg: #e8f0f2;
+  --color-surface-alt: #eaeeee;
 
-  --shadow-soft: 0 4px 20px rgba(45, 42, 38, 0.08);
-  --shadow-soft-md: 0 8px 30px rgba(45, 42, 38, 0.1);
+  /* Blue: trust, navigation, primary actions, identity. */
+  --color-primary: #073d5d;
+  --color-primary-hover: #062f4b;
+  --color-primary-light: #e1e8ec;
 
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-fraunces);
+  /* Teal: life, activity, connection, positive state — icons and graphics
+     only. --color-secondary-text is the same hue deepened until it clears
+     4.5:1 for the rare case teal carries actual text (e.g. a topic tag),
+     since the raw accent only clears the 3:1 large-scale/icon threshold. */
+  --color-secondary: #639293;
+  --color-secondary-light: #e0e9e9;
+  --color-secondary-text: #456174;
+
+  --color-text-primary: #062f4b;
+  --color-text-secondary: #345369;
+  --color-text-muted: #5c7383;
+  --color-border: #d1dade;
+
+  /* Severity colors live outside the blue/teal brand family on purpose —
+     an alert must never be mistaken for a navigation or identity color. */
+  --color-alert-urgent: #b3432f;
+  --color-alert-urgent-bg: #f7ecea;
+  --color-alert-warning: #8a5819;
+  --color-alert-warning-bg: #f1ebe3;
+  --color-alert-info: #4f6b85;
+  --color-alert-info-bg: #edf0f3;
+
+  --shadow-soft: 0 4px 20px rgba(6, 47, 75, 0.08);
+  --shadow-soft-md: 0 8px 30px rgba(6, 47, 75, 0.1);
+
+  --font-sans: var(--font-figtree);
 }
 
 body {

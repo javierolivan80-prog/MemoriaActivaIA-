@@ -24,7 +24,7 @@ export default function ErrorPage({
         className="h-10 w-10 text-alert-warning"
         strokeWidth={1.5}
       />
-      <h1 className="mt-4 font-serif text-3xl text-text-primary">
+      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary">
         Algo no ha ido bien
       </h1>
       <p className="mt-3 max-w-sm text-text-secondary">

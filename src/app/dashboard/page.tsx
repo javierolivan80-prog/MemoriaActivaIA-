@@ -197,7 +197,7 @@ export default async function DashboardPage({
     <div className="min-h-screen bg-background px-4 py-16">
       <div className="mx-auto w-full max-w-4xl">
         <div className="flex items-center justify-between">
-          <h1 className="font-serif text-2xl text-text-primary">
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
             Hola {displayName}
           </h1>
           <LogoutButton />

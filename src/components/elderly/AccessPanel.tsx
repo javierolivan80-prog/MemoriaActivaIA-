@@ -202,7 +202,7 @@ export default function AccessPanel({ elderlyId }: { elderlyId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="font-serif text-2xl text-text-primary">
+        <h2 className="text-2xl font-semibold tracking-tight text-text-primary">
           Personas con acceso
         </h2>
         <Button type="button" onClick={() => setShowInviteModal(true)}>

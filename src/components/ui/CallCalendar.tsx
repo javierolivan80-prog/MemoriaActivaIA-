@@ -97,7 +97,7 @@ function DayDetailModal({
     >
       <div className="flex items-start justify-between">
         <div>
-          <h2 id="day-detail-modal-title" className="font-serif text-2xl capitalize text-text-primary">
+          <h2 id="day-detail-modal-title" className="text-2xl font-semibold tracking-tight capitalize text-text-primary">
             {formatFullDate(day.date)}
           </h2>
           <p className="text-sm text-text-secondary">
@@ -158,7 +158,7 @@ function DayDetailModal({
                   {session.topics_discussed.map((topic) => (
                     <span
                       key={topic}
-                      className="rounded-full bg-secondary-light px-2.5 py-0.5 text-xs text-secondary"
+                      className="rounded-full bg-secondary-light px-2.5 py-0.5 text-xs text-secondary-text"
                     >
                       {topic}
                     </span>
@@ -272,7 +272,7 @@ export default function CallCalendar({
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h2 className="font-serif text-xl text-text-primary">
+        <h2 className="text-xl font-semibold tracking-tight text-text-primary">
           {MONTH_NAMES[month]} {year}
         </h2>
         <button

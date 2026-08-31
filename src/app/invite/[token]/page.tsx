@@ -41,7 +41,7 @@ export default async function InvitePage({
   if (invite.invited_email !== user.email) {
     return (
       <EntryShell>
-        <h1 className="font-serif text-3xl text-text-primary">
+        <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
           Esta invitación es para otro email
         </h1>
         <p className="mt-3 text-text-secondary">
@@ -70,7 +70,7 @@ export default async function InvitePage({
 
   return (
     <EntryShell>
-      <h1 className="font-serif text-3xl leading-tight text-text-primary">
+      <h1 className="text-3xl font-semibold tracking-tight leading-tight text-text-primary">
         {inviter.user?.email ?? "Un familiar"} te ha invitado a ver el
         perfil de {elderlyProfile?.name ?? "un familiar"}
       </h1>

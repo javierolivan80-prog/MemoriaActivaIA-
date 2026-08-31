@@ -60,7 +60,7 @@ export default function PricingCards({
     <div>
       <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <h1 className="font-serif text-4xl leading-tight text-text-primary">
+          <h1 className="text-4xl leading-tight font-semibold tracking-tight text-text-primary">
             Elige cómo acompañarle
           </h1>
           <p className="mt-4 max-w-sm text-lg text-text-secondary">
@@ -125,7 +125,7 @@ export default function PricingCards({
                       Más elegido
                     </span>
                   )}
-                  <h2 className="font-serif text-2xl text-text-primary">
+                  <h2 className="text-2xl font-semibold tracking-tight text-text-primary">
                     {plan.name}
                   </h2>
                   <p className="mt-4 flex items-baseline gap-1">

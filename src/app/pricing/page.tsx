@@ -52,7 +52,7 @@ export default async function PricingPage({
               className="mx-auto h-10 w-10 text-primary"
               strokeWidth={1.5}
             />
-            <h1 className="mt-5 font-serif text-3xl text-text-primary">
+            <h1 className="mt-5 text-3xl font-semibold tracking-tight text-text-primary">
               Añade primero un familiar
             </h1>
             <p className="mt-3 text-lg text-text-secondary">

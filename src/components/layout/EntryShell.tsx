@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import Reveal from "@/components/ui/Reveal";
@@ -12,9 +13,17 @@ export default function EntryShell({
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-20">
         <Link
           href="/"
-          className="mb-10 inline-block w-fit font-serif text-2xl text-text-primary"
+          className="mb-10 inline-block w-fit"
+          aria-label="Memoria Activa, ir al inicio"
         >
-          Memoria Activa
+          <Image
+            src="/brand/icon-transparent.png"
+            alt=""
+            width={628}
+            height={372}
+            priority
+            className="h-8 w-auto"
+          />
         </Link>
         <Reveal className="w-full max-w-sm">{children}</Reveal>
       </div>
@@ -30,7 +39,7 @@ export default function EntryShell({
         />
 
         <div className="relative flex h-full flex-col justify-center px-16">
-          <h2 className="max-w-md font-serif text-4xl leading-[1.15] text-text-primary">
+          <h2 className="max-w-md text-4xl leading-[1.15] font-semibold tracking-tight text-text-primary">
             Compañía real para quien más quieres
           </h2>
           <p className="mt-6 max-w-sm text-lg text-text-secondary">
@@ -41,7 +50,7 @@ export default function EntryShell({
           <div className="relative mt-14 max-w-xs">
             <div className="rounded-2xl border border-border bg-surface p-5 shadow-soft-md">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-light font-serif text-primary">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-light font-semibold text-primary">
                   M
                 </div>
                 <div>

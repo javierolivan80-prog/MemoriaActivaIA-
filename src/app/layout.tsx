@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Fraunces } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// One humanist sans across the whole type scale — display through caption —
+// instead of a display serif paired with a separate UI sans. Figtree reads
+// warm and rounded without being a novelty face, and stays legible for a
+// mixed-age audience at every size the app uses.
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
 });
 
@@ -20,10 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="es"
-      className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
-    >
+    <html lang="es" className={`${figtree.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );

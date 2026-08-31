@@ -93,7 +93,7 @@ function AddPhotoModal({
       contentClassName="w-full max-w-md rounded-2xl bg-surface p-6 shadow-soft"
     >
       <div className="flex items-center justify-between">
-        <h2 id="add-photo-modal-title" className="font-serif text-2xl text-text-primary">
+        <h2 id="add-photo-modal-title" className="text-2xl font-semibold tracking-tight text-text-primary">
           Añadir foto
         </h2>
         <button

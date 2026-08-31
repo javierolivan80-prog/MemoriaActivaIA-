@@ -111,7 +111,7 @@ function SessionCard({ session }: { session: SessionWithSummary }) {
                 {summary.topics_discussed.map((topic) => (
                   <span
                     key={topic}
-                    className="rounded-full bg-secondary-light px-2.5 py-0.5 text-xs text-secondary"
+                    className="rounded-full bg-secondary-light px-2.5 py-0.5 text-xs text-secondary-text"
                   >
                     {topic}
                   </span>

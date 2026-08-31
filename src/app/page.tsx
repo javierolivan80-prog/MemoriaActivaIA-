@@ -64,7 +64,7 @@ export default function Home() {
 
         <div className="relative mx-auto grid max-w-6xl items-center gap-16 md:grid-cols-[1.05fr_0.95fr] md:gap-12">
           <div className="text-center md:text-left">
-            <h1 className="mx-auto max-w-xl font-serif text-5xl font-medium leading-[1.08] text-text-primary md:mx-0 md:text-[3.75rem]">
+            <h1 className="mx-auto max-w-xl text-5xl font-semibold leading-[1.08] tracking-tight text-text-primary md:mx-0 md:text-[3.75rem]">
               Compañía real para quien más quieres
             </h1>
             <p className="mx-auto mt-6 max-w-md text-lg text-text-secondary md:mx-0">
@@ -91,7 +91,7 @@ export default function Home() {
           <div className="relative mx-auto w-full max-w-sm md:mx-0" aria-hidden>
             <div className="relative rounded-2xl border border-border bg-surface p-6 shadow-soft-md">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-light font-serif text-lg text-primary">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-light text-lg font-semibold text-primary">
                   M
                 </div>
                 <div className="min-w-0">
@@ -135,7 +135,7 @@ export default function Home() {
 
       <section className="bg-surface-alt py-20 md:py-28">
         <div className="mx-auto max-w-3xl px-6">
-          <h2 className="text-center font-serif text-3xl text-text-primary">
+          <h2 className="text-center text-3xl font-semibold tracking-tight text-text-primary">
             Cómo funciona
           </h2>
           <div className="mt-16 space-y-16 md:space-y-24">
@@ -146,7 +146,7 @@ export default function Home() {
               >
                 <span
                   aria-hidden
-                  className="font-serif text-8xl leading-none text-primary/15 md:w-40 md:shrink-0 md:text-9xl"
+                  className="text-8xl leading-none font-bold text-primary/15 md:w-40 md:shrink-0 md:text-9xl"
                 >
                   {step.number}
                 </span>
@@ -167,7 +167,7 @@ export default function Home() {
       <section className="py-20 md:py-28">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 md:grid-cols-[0.8fr_1.2fr] md:gap-20">
           <div className="md:sticky md:top-32 md:self-start">
-            <h2 className="font-serif text-3xl text-text-primary md:text-4xl">
+            <h2 className="text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
               Por qué Memoria Activa
             </h2>
             <p className="mt-4 max-w-sm text-text-secondary">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { buttonBaseClasses, buttonVariantClasses } from "@/components/ui/Button";
 
@@ -25,8 +26,15 @@ export default function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="font-serif text-xl text-text-primary">
-          Memoria Activa
+        <Link href="/" className="shrink-0" aria-label="Memoria Activa, ir al inicio">
+          <Image
+            src="/brand/icon-transparent.png"
+            alt=""
+            width={628}
+            height={372}
+            priority
+            className="h-9 w-auto"
+          />
         </Link>
         <nav className="flex items-center gap-3">
           <Link
