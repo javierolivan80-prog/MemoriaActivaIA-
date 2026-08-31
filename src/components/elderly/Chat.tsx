@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, ChevronLeft, Loader2, Pencil, Send, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
+import Input, { fieldClasses } from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 import { apiFetch, NETWORK_ERROR_MESSAGE } from "@/lib/apiFetch";
 import type { FamilyChatMessage, FamilyChatThread } from "@/types";
@@ -381,7 +381,7 @@ function ThreadConversation({
               onKeyDown={(event) => event.key === "Enter" && handleRename()}
               onBlur={handleRename}
               autoFocus
-              className="w-full rounded-lg border border-primary px-2 py-1 text-base font-semibold text-text-primary focus:outline-none"
+              className="w-full rounded-xl border border-primary px-2 py-1 text-base font-semibold text-text-primary focus:outline-none"
             />
           ) : (
             <h2 className="truncate text-base font-semibold text-text-primary">
@@ -506,7 +506,7 @@ function ThreadConversation({
             if (event.key === "Enter") handleSend(input);
           }}
           placeholder="Escribe un mensaje..."
-          className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className={`flex-1 ${fieldClasses}`}
         />
         <button
           type="button"

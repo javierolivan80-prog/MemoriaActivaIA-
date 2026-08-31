@@ -108,6 +108,9 @@ function AddPhotoModal({
 
       <div className="mt-5 space-y-4">
         {preview ? (
+          // Local blob: URL from an unsaved file input — next/image's
+          // optimizer can't fetch it, so a plain <img> is correct here.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={preview}
             alt="Vista previa"
@@ -208,11 +211,15 @@ function Lightbox({
         </button>
       </div>
       {photo.signed_url && (
-        <img
-          src={photo.signed_url}
-          alt={photo.caption}
-          className="max-h-[60vh] w-full rounded-xl object-contain"
-        />
+        <div className="relative h-[60vh] w-full">
+          <Image
+            src={photo.signed_url}
+            alt={photo.caption}
+            fill
+            sizes="(min-width: 768px) 32rem, 100vw"
+            className="rounded-xl object-contain"
+          />
+        </div>
       )}
       <p id="lightbox-caption" className="mt-4 text-base text-text-primary">
         {photo.caption}

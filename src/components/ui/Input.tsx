@@ -1,7 +1,12 @@
 import type { InputHTMLAttributes } from "react";
 
-export const inputClasses =
-  "mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30";
+// The field's visual chrome, shared with any input rendered outside this
+// component (e.g. an inline chat composer) so both stay in sync with the
+// design system instead of hand-duplicating the same Tailwind string.
+export const fieldClasses =
+  "rounded-xl border border-border bg-surface px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30";
+
+export const inputClasses = `mt-2 w-full ${fieldClasses}`;
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
